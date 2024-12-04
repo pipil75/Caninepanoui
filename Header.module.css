@@ -1,0 +1,38 @@
+.header {
+  background-color: #847774;
+  padding: 20px;
+  text-align: center;
+}
+
+.navList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  justify-content: center;
+  justify-content: space-between;
+}
+
+.navList li {
+  margin: 0 15px;
+}
+
+.link {
+  color: white;
+  text-decoration: none;
+  font-size: 18px;
+}
+
+.link:hover {
+  color: rgba(0, 0, 0, 1);
+}
+
+.aboutLink {
+  color: #847774;
+  text-decoration: none;
+  font-size: 18px;
+}
+
+.aboutLink:hover {
+  color: rgba(0, 0, 0, 1);
+}
