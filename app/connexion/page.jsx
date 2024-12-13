@@ -1,28 +1,23 @@
 "use client";
+
 import React, { useState, useEffect } from "react";
-import { createTheme, ThemeProvider } from "@mui/material/styles";
-import {
-  Card,
-  CardActions,
-  CardContent,
-  Button,
-  Typography,
-  Box,
-  TextField,
-} from "@mui/material";
 import { useRouter } from "next/navigation";
-import {
-  signInWithEmailAndPassword,
-  getAuth,
-  onAuthStateChanged,
-} from "firebase/auth";
+import { signInWithEmailAndPassword, onAuthStateChanged } from "firebase/auth";
 import { auth, database } from "../../lib/firebase";
 import { ref, get } from "firebase/database";
 import Image from "next/image";
 import Link from "next/link";
+import Typography from "@mui/material/Typography";
+import { ThemeProvider, createTheme } from "@mui/material/styles";
+// Import corrects depuis Material-UI
 
-import "../global.css";
-
+import Card from "@mui/material/Card";
+import CardActions from "@mui/material/CardActions";
+import CardContent from "@mui/material/CardContent";
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import TextField from "@mui/material/TextField";
+import styles from "../connexion/Connexion.module.css";
 const theme = createTheme({
   palette: {
     primary: { main: "#FCFEF7" },
@@ -51,7 +46,6 @@ export default function MediaCard() {
         if (snapshot.exists()) {
           const role = snapshot.val();
           router.push(role === "pro" ? "/porfilepro" : "/accueil");
-          // Affiche la popup si l'utilisateur est connecté
         } else {
           setError("Rôle de l'utilisateur introuvable.");
         }
@@ -60,7 +54,7 @@ export default function MediaCard() {
     });
 
     return () => unsubscribe(); // Cleanup on component unmount
-  }, [auth, router]);
+  }, [router]);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -103,14 +97,16 @@ export default function MediaCard() {
 
   return (
     <ThemeProvider theme={theme}>
-      <div className="container">
+      <div className={styles.container}>
         <Image
           alt="logo chien"
           width={300}
           height={300}
           src="/images/blob.png"
         />
-        <Card sx={{ maxWidth: 600, backgroundColor: "primary.main" }}>
+        <Card
+          sx={{ maxWidth: 600, backgroundColor: theme.palette.primary.main }}
+        >
           <CardContent>
             <Typography
               variant="h3"
@@ -158,7 +154,7 @@ export default function MediaCard() {
                 sx={{
                   mt: 2,
                   mb: 1,
-                  backgroundColor: "secondary.main",
+                  backgroundColor: theme.palette.secondary.main,
                 }}
                 disabled={loading}
               >

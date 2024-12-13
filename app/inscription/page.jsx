@@ -23,7 +23,7 @@ import {
   uploadBytes,
   getDownloadURL,
 } from "firebase/storage";
-
+import styles from "../connexion/Connexion.module.css";
 const theme = createTheme({
   palette: {
     primary: {
@@ -46,6 +46,7 @@ const MediaInscription = () => {
   const [image, setImage] = useState("");
   const [confirmationMessage, setConfirmationMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
   const auth = getAuth();
 
@@ -55,6 +56,10 @@ const MediaInscription = () => {
     // Validation des mots de passe
     if (password !== confirmPassword) {
       setError("Les mots de passe ne correspondent pas.");
+      return;
+    }
+    if (!emailRegex.test(email)) {
+      setError("Veuillez fournir une adresse e-mail valide.");
       return;
     }
 
@@ -141,7 +146,7 @@ const MediaInscription = () => {
 
   return (
     <ThemeProvider theme={theme}>
-      <div className="container">
+      <div className={styles.container}>
         <Image
           component="img"
           alt="logo chien"
@@ -194,7 +199,14 @@ const MediaInscription = () => {
                   name="email"
                   autoComplete="email"
                   variant="standard"
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    if (!emailRegex.test(e.target.value)) {
+                      setError("Adresse e-mail invalide.");
+                    } else {
+                      setError(null);
+                    }
+                  }}
                 />
                 <TextField
                   value={password}
