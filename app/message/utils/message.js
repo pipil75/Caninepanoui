@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { sendMessageToBothSides } from "./page";
+import { sendMessageToBothSides } from " ./sendMessageToBothSides";
 
 export default function SendMessageClient() {
   const [message, setMessage] = useState("");

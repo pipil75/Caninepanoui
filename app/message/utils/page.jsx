@@ -1,8 +1,10 @@
 "use client";
-export const dynamic = "force-dynamic";
-import dynamic from "next/dynamic";
 
-const SendMessageClient = dynamic(() => import("./messagutil"), {
+export const Setting = "force-dynamic"; // Renommez la variable
+
+import DynamicComponent from "next/dynamic";
+
+const SendMessageClient = DynamicComponent(() => import("./messagutil"), {
   ssr: false, // Désactive le rendu serveur
 });
 
