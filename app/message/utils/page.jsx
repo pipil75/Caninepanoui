@@ -1,6 +1,6 @@
 import { ref, push, set } from "firebase/database";
 import { auth, database } from "../../../lib/firebase";
-
+import { update } from "firebase/database";
 export const sendMessageToBothSides = async ({
   message,
   recipientId,
@@ -51,7 +51,7 @@ export const sendMessageToBothSides = async ({
     updates[`users/${senderRole}/${currentUser.uid}/messages/${messageKey}`] =
       messageData;
 
-    await set(ref(database), updates);
+    await update(ref(database), updates);
 
     console.log("Message envoyé et enregistré des deux côtés.");
     return "Message envoyé avec succès.";
