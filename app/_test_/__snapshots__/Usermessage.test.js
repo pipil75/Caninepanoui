@@ -10,10 +10,8 @@ import UserMessages from "../../message/user/page"; // Composant UserMessages
 import { ref, onValue, push, remove } from "firebase/database";
 import "@testing-library/jest-dom";
 
-// Mock global alert
 global.alert = jest.fn();
 
-// Mock Firebase modules
 jest.mock("firebase/app", () => ({
   initializeApp: jest.fn(() => ({})),
 }));

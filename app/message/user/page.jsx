@@ -14,7 +14,8 @@ import {
   Grid,
 } from "@mui/material";
 import { Delete, Reply } from "@mui/icons-material";
-
+import ResponsiveAppBar from "../../navbar";
+import Header from "../../../header";
 export default function UserMessages() {
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -104,6 +105,7 @@ export default function UserMessages() {
 
   return (
     <Box sx={{ padding: 4 }}>
+      <ResponsiveAppBar />
       <Typography variant="h4" gutterBottom>
         Messages Utilisateur
       </Typography>
@@ -191,6 +193,7 @@ export default function UserMessages() {
           </Grid>
         ))}
       </Grid>
+      <Header />
     </Box>
   );
 }

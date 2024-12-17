@@ -1,45 +1,39 @@
 import React from "react";
-// Importation des outils nécessaires pour les tests React
+
 import { render, screen, fireEvent, act } from "@testing-library/react";
-// Importation du composant MediaInscription
+
 import MediaInscription from "../inscription/page";
-// Importation des fonctions Firebase à mocker
+
 import {
   createUserWithEmailAndPassword,
   sendEmailVerification,
 } from "firebase/auth";
 
-// Mock de `next/link` pour rendre les enfants directement
 jest.mock("next/link", () => ({
   __esModule: true,
   default: ({ children }) => children,
 }));
 
-// Mock des fonctions Firebase pour simuler leur comportement sans réellement appeler Firebase
 jest.mock("firebase/auth", () => ({
-  getAuth: jest.fn(() => ({ auth: {} })), // Mock de getAuth
-  createUserWithEmailAndPassword: jest.fn(), // Mock de création d'utilisateur
-  sendEmailVerification: jest.fn(), // Mock de l'envoi d'e-mail de vérification
+  getAuth: jest.fn(() => ({ auth: {} })),
+  createUserWithEmailAndPassword: jest.fn(),
+  sendEmailVerification: jest.fn(),
 }));
 
-// Mock des fonctionnalités Firebase Database
 jest.mock("firebase/database", () => ({
-  getDatabase: jest.fn(() => ({})), // Mock de la base de données
-  ref: jest.fn(), // Mock de la référence à une table
-  set: jest.fn(), // Mock de l'écriture dans la base de données
+  getDatabase: jest.fn(() => ({})),
+  ref: jest.fn(),
+  set: jest.fn(),
 }));
 
-// Mock des fonctionnalités Firebase Storage
 jest.mock("firebase/storage", () => ({
-  getStorage: jest.fn(() => ({})), // Mock du stockage
-  ref: jest.fn(), // Mock de la référence de fichier
-  uploadBytes: jest.fn(), // Mock du téléchargement de fichier
-  getDownloadURL: jest.fn().mockResolvedValue("mockImageUrl"), // Mock de récupération d'une URL
+  getStorage: jest.fn(() => ({})),
+  ref: jest.fn(),
+  uploadBytes: jest.fn(),
+  getDownloadURL: jest.fn().mockResolvedValue("mockImageUrl"),
 }));
 
-// Déclaration de la suite de tests pour le composant MediaInscription
 describe("MediaInscription", () => {
-  // Réinitialisation des mocks avant chaque test
   beforeEach(() => {
     jest.clearAllMocks();
   });
@@ -117,7 +111,6 @@ describe("MediaInscription", () => {
 
   // Test pour vérifier les appels aux méthodes Firebase en cas d'inscription réussie
   it("calls Firebase methods on successful registration", async () => {
-    // Mock de la réponse de Firebase
     createUserWithEmailAndPassword.mockResolvedValueOnce({
       user: { uid: "mockUid" },
     });
@@ -159,7 +152,6 @@ describe("MediaInscription", () => {
 
   // Test pour vérifier l'affichage d'un message de confirmation après une inscription réussie
   it("shows a confirmation message after successful registration", async () => {
-    // Mock de la réponse de Firebase
     createUserWithEmailAndPassword.mockResolvedValueOnce({
       user: { uid: "mockUid" },
     });

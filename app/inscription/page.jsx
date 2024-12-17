@@ -47,7 +47,8 @@ const MediaInscription = () => {
   const [confirmationMessage, setConfirmationMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
+  const [adresse, setAdressse] = useState("");
+  const [codepostal, setCodepostal] = useState("");
   const auth = getAuth();
 
   const handleRegister = async (e) => {
@@ -93,6 +94,8 @@ const MediaInscription = () => {
       // Sauvegarde des données utilisateur dans Firebase Database
       const useRef = ref(database, `users/${userCredential.user.uid}`);
       await set(useRef, {
+        adresse: adresse,
+        codepostal: codepostal,
         email: email,
         image: imageUrl,
         name: name,
@@ -116,6 +119,8 @@ const MediaInscription = () => {
       setSiret("");
       setImage(null);
       setError(null);
+      setAdressse("");
+      setCodepostal("");
     } catch (error) {
       // Gestion des erreurs Firebase
       switch (error.code) {
@@ -191,11 +196,33 @@ const MediaInscription = () => {
                   onChange={(e) => setName(e.target.value)}
                 />
                 <TextField
+                  value={adresse}
+                  required
+                  fullWidth
+                  id="adresse"
+                  label="Adresse"
+                  name="adresse"
+                  autoComplete="adresse"
+                  variant="standard"
+                  onChange={(e) => setAdressse(e.target.value)}
+                />
+                <TextField
+                  value={codepostal}
+                  required
+                  fullWidth
+                  id="codepostal"
+                  label="Codepostal"
+                  name="codepostal"
+                  autoComplete="codepostal"
+                  variant="standard"
+                  onChange={(e) => setCodepostal(e.target.value)}
+                />
+                <TextField
                   value={email}
                   required
                   fullWidth
                   id="email"
-                  label="Adresse e-mail"
+                  label=" entré une Adresse e-mail paypal pro"
                   name="email"
                   autoComplete="email"
                   variant="standard"

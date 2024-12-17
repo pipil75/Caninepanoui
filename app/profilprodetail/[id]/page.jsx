@@ -39,7 +39,17 @@ export default function UserDetailPage() {
   const [message, setMessage] = useState("");
   const [showPayPalPopup, setShowPayPalPopup] = useState(false);
   const [buyerEmail, setBuyerEmail] = useState("");
-
+  const initialOptions = {
+    "client-id":
+      "AWuwTPoxttVt936EYkc_kjNKTrusQxjaGSlFGbDRW2RKgeODFTuK7n2lIsUKcwF0KgOuwbvk1XG-hSGF",
+    "enable-funding": "venmo",
+    "disable-funding": "",
+    "buyer-country": "FR",
+    currency: "EUR",
+    "data-page-type": "product-details",
+    components: "buttons",
+    "data-sdk-integration-source": "developer-studio",
+  };
   useEffect(() => {
     if (id) {
       const fetchUserDetail = async () => {
@@ -296,7 +306,6 @@ export default function UserDetailPage() {
             </CardContent>
           )}
         </Card>
-
         {/* Dialog for PayPal Payment */}
         {showPayPalPopup && (
           <Dialog open={showPayPalPopup} onClose={handlePopupClose}>
@@ -305,41 +314,92 @@ export default function UserDetailPage() {
               <DialogContentText>
                 Effectuez un paiement de 10€ pour réserver ce professionnel.
               </DialogContentText>
-              <PayPalScriptProvider
-                options={{
-                  "client-id": process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID,
-                }}
-              >
+
+              <PayPalScriptProvider options={initialOptions}>
                 <PayPalButtons
-                  style={{ layout: "vertical" }}
-                  createOrder={(data, actions) => {
-                    return actions.order.create({
-                      purchase_units: [
-                        {
-                          amount: {
-                            currency_code: "USD",
-                            value: "10.00",
-                          },
+                  style={{
+                    shape: "rect",
+                    layout: "vertical",
+                    color: "gold",
+                    label: "paypal",
+                  }}
+                  createOrder={async () => {
+                    try {
+                      const response = await fetch("/api/orders", {
+                        method: "POST",
+                        headers: {
+                          "Content-Type": "application/json",
                         },
-                      ],
-                    });
-                  }}
-                  onApprove={(data, actions) => {
-                    return actions.order.capture().then((details) => {
-                      const email = details.payer.email_address;
-                      setBuyerEmail(email);
-                      setConfirmationMessage(
-                        `Paiement effectué avec succès ! Email : ${email}`
+                        body: JSON.stringify({
+                          amount: "60.00",
+                          currency: "EUR",
+                          payeeEmail: user.email,
+                        }),
+                      });
+
+                      const orderData = await response.json();
+                      console.log("order data : ", orderData);
+
+                      if (orderData.id) {
+                        return orderData.id;
+                      } else {
+                        const errorDetail = orderData?.details?.[0];
+                        const errorMessage = errorDetail
+                          ? `${errorDetail.issue} ${errorDetail.description} (${orderData.debug_id})`
+                          : JSON.stringify(orderData);
+
+                        throw new Error(errorMessage);
+                      }
+                    } catch (error) {
+                      console.error(error);
+                      setMessage(
+                        `Could not initiate PayPal Checkout...${error}`
                       );
-                      setShowPayPalPopup(false);
-                    });
+                    }
                   }}
-                  onError={(err) => {
-                    console.error("Erreur PayPal :", err);
-                    setConfirmationMessage("Erreur lors du paiement.");
+                  onApprove={async (data, actions) => {
+                    try {
+                      const response = await fetch(
+                        `/api/orders/${data.orderID}/capture`,
+                        {
+                          method: "POST",
+                          headers: {
+                            "Content-Type": "application/json",
+                          },
+                        }
+                      );
+
+                      const orderData = await response.json();
+                      const errorDetail = orderData?.details?.[0];
+
+                      if (errorDetail?.issue === "INSTRUMENT_DECLINED") {
+                        return actions.restart();
+                      } else if (errorDetail) {
+                        throw new Error(
+                          `${errorDetail.description} (${orderData.debug_id})`
+                        );
+                      } else {
+                        const transaction =
+                          orderData.purchase_units[0].payments.captures[0];
+                        setMessage(
+                          `Transaction ${transaction.status}: ${transaction.id}. See console for all available details`
+                        );
+                        console.log(
+                          "Capture result",
+                          orderData,
+                          JSON.stringify(orderData, null, 2)
+                        );
+                      }
+                    } catch (error) {
+                      console.error(error);
+                      setMessage(
+                        `Sorry, your transaction could not be processed...${error}`
+                      );
+                    }
                   }}
                 />
               </PayPalScriptProvider>
+
               {buyerEmail && (
                 <Typography variant="body1" sx={{ mt: 2 }}>
                   Email de l'acheteur : {buyerEmail}

@@ -8,6 +8,7 @@ const customJestConfig = {
   testEnvironment: "jest-environment-jsdom", // Utilisé pour tester des composants React
   moduleFileExtensions: ["js", "jsx"], // Extensions reconnues par Jest
   transformIgnorePatterns: ["/node_modules/"],
+  setupFilesAfterEnv: ["<rootDir>/jest.setup.js"],
 };
 
 module.exports = createJestConfig(customJestConfig);

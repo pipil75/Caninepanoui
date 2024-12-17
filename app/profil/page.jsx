@@ -12,7 +12,8 @@ import { useState, useEffect } from "react";
 import { auth, database } from "../../lib/firebase";
 import { ref, update, get } from "firebase/database";
 import { updatePassword, onAuthStateChanged } from "firebase/auth";
-
+import ResponsiveAppBar from "../navbar";
+import Header from "../../header";
 const theme = createTheme({
   palette: {
     primary: {
@@ -109,6 +110,7 @@ export default function Cardprofil() {
 
   return (
     <ThemeProvider theme={theme}>
+      <ResponsiveAppBar />
       <div className="container">
         <Card sx={{ maxWidth: 600, backgroundColor: "primary.main" }}>
           <CardContent>
@@ -216,6 +218,7 @@ export default function Cardprofil() {
           </CardActions>
         </Card>
       </div>
+      <Header />
     </ThemeProvider>
   );
 }
