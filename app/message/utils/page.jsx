@@ -1,5 +1,4 @@
 "use client";
-
 import { ref, push, set } from "firebase/database";
 import { auth, database } from "../../../lib/firebase";
 import { update } from "firebase/database";
