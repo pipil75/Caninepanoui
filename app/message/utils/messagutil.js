@@ -1,7 +1,7 @@
 "use client"; // Important ici
 
 import { ref, push, update } from "firebase/database";
-import { auth, database } from "../../lib/firebase";
+import { auth, database } from "../../../lib/firebase";
 
 export const sendMessageToBothSides = async ({
   message,
