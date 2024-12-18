@@ -15,7 +15,7 @@ import {
 } from "@mui/material";
 import { Delete, Reply } from "@mui/icons-material";
 import ResponsiveAppBar from "../../navbar";
-import Header from "../../../header";
+import Header from "../../header";
 export default function UserMessages() {
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(true);

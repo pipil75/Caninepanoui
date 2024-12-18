@@ -4,7 +4,6 @@ import AppBar from "@mui/material/AppBar";
 import Box from "@mui/material/Box";
 import Toolbar from "@mui/material/Toolbar";
 import IconButton from "@mui/material/IconButton";
-import Typography from "@mui/material/Typography";
 import Menu from "@mui/material/Menu";
 import Image from "next/image";
 import Container from "@mui/material/Container";
@@ -13,9 +12,10 @@ import Button from "@mui/material/Button";
 import Tooltip from "@mui/material/Tooltip";
 import MenuItem from "@mui/material/MenuItem";
 import { ref, get } from "firebase/database";
-import { auth, database } from "../lib/firebase"; // Assurez-vous que le chemin est correct
+import { auth, database } from "../lib/firebase";
 import { useRouter } from "next/navigation";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
+import useMediaQuery from "@mui/material/useMediaQuery";
 
 const theme = createTheme({
   palette: {
@@ -35,28 +35,24 @@ function ResponsiveAppBar() {
   const [anchorElNav, setAnchorElNav] = React.useState(null);
   const [anchorElUser, setAnchorElUser] = React.useState(null);
   const [images, setImages] = React.useState(null);
-  const [role, setRole] = React.useState(null); // Ajouter un état pour le rôle
+  const [role, setRole] = React.useState(null);
   const router = useRouter();
+  const isMobile = useMediaQuery("(max-width:600px)");
 
   React.useEffect(() => {
-    // Récupérer l'image de profil depuis Firebase
     const userId = auth.currentUser?.uid;
     if (userId) {
       const imageRef = ref(database, `users/${userId}/image`);
       get(imageRef).then((snapshot) => {
         if (snapshot.exists()) {
-          const imageUrl = snapshot.val();
-          console.log("URL de l'image de profil :", imageUrl);
-          setImages(imageUrl); // Mettre à jour l'état avec l'URL de l'image
+          setImages(snapshot.val());
         }
       });
 
-      // Récupérer le rôle de l'utilisateur depuis Firebase
       const roleRef = ref(database, `users/${userId}/role`);
       get(roleRef).then((snapshot) => {
         if (snapshot.exists()) {
-          const userRole = snapshot.val();
-          setRole(userRole);
+          setRole(snapshot.val());
         }
       });
     }
@@ -66,12 +62,16 @@ function ResponsiveAppBar() {
     setAnchorElNav(event.currentTarget);
   };
 
+  const handleCloseNavMenu = () => {
+    setAnchorElNav(null);
+  };
+
   const handleOpenUserMenu = (event) => {
     setAnchorElUser(event.currentTarget);
   };
 
-  const handleCloseNavMenu = () => {
-    router.push("/profil");
+  const handleCloseUserMenu = () => {
+    setAnchorElUser(null);
   };
 
   const handleLogout = () => {
@@ -79,9 +79,17 @@ function ResponsiveAppBar() {
     router.push("/connexion");
   };
 
-  const handleMessage = () => {
-    router.push("/message");
+  const handleNavigate = (path) => {
+    router.push(path);
+    handleCloseNavMenu();
   };
+
+  const menuItems = [
+    { label: "Accueil", path: "/", visible: true },
+    { label: "Mon profil", path: "/profil", visible: true },
+    { label: "Messages", path: "/message", visible: !!role },
+    { label: "Déconnexion", path: null, visible: true, action: handleLogout },
+  ];
 
   return (
     <ThemeProvider theme={theme}>
@@ -89,46 +97,87 @@ function ResponsiveAppBar() {
         <Container maxWidth="xl">
           <Toolbar disableGutters>
             <Image
-              component="img"
               alt="logo chien"
-              width={100}
-              height={100}
+              width={isMobile ? 50 : 100}
+              height={isMobile ? 50 : 100}
               src="/images/blob.png"
             />
 
-            <Box sx={{ flexGrow: 1, display: { xs: "none", md: "flex" } }}>
-              <Button
-                href="./connexion"
-                onClick={handleLogout}
-                sx={{ my: 2, color: "white", display: "block" }}
-              >
-                Déconnexion
-              </Button>
-            </Box>
-            <Box sx={{ flexGrow: 1, display: { xs: "none", md: "flex" } }}>
-              <Button
-                onClick={handleCloseNavMenu}
-                sx={{ my: 2, color: "white", display: "block" }}
-              >
-                Mon profil
-              </Button>
-            </Box>
-            <Box sx={{ flexGrow: 1, display: { xs: "none", md: "flex" } }}>
-              {role && (
-                <Button
-                  onClick={handleMessage}
-                  sx={{ my: 2, color: "white", display: "block" }}
-                >
-                  Messages
-                </Button>
+            {/* Desktop Navigation */}
+            <Box
+              sx={{
+                flexGrow: 1,
+                display: { xs: "none", md: "flex" },
+                justifyContent: "space-between", // Added to evenly space links
+                alignItems: "center", // Ensures alignment in case of different heights
+              }}
+            >
+              {menuItems.map(
+                (item, index) =>
+                  item.visible && (
+                    <Button
+                      key={index}
+                      onClick={() =>
+                        item.action ? item.action() : handleNavigate(item.path)
+                      }
+                      sx={{ my: 2, color: "white", display: "block" }}
+                    >
+                      {item.label}
+                    </Button>
+                  )
               )}
             </Box>
+
+            {/* Mobile Navigation */}
+            <Box sx={{ flexGrow: 1, display: { xs: "flex", md: "none" } }}>
+              <IconButton
+                size="large"
+                aria-label="menu"
+                aria-controls="menu-appbar"
+                aria-haspopup="true"
+                onClick={handleOpenNavMenu}
+                color="inherit"
+              >
+                <Avatar sx={{ bgcolor: "#847774" }}>☰</Avatar>
+              </IconButton>
+              <Menu
+                id="menu-appbar"
+                anchorEl={anchorElNav}
+                anchorOrigin={{
+                  vertical: "top",
+                  horizontal: "left",
+                }}
+                keepMounted
+                transformOrigin={{
+                  vertical: "top",
+                  horizontal: "left",
+                }}
+                open={Boolean(anchorElNav)}
+                onClose={handleCloseNavMenu}
+              >
+                {menuItems.map(
+                  (item, index) =>
+                    item.visible && (
+                      <MenuItem
+                        key={index}
+                        onClick={() =>
+                          item.action
+                            ? item.action()
+                            : handleNavigate(item.path)
+                        }
+                      >
+                        {item.label}
+                      </MenuItem>
+                    )
+                )}
+              </Menu>
+            </Box>
+
+            {/* User Profile Section */}
             <Box sx={{ flexGrow: 0 }}>
               <Tooltip title="Open settings">
                 <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
-                  <div>
-                    <Avatar sx={{ width: 56, height: 56 }} src={images} />
-                  </div>
+                  <Avatar sx={{ width: 56, height: 56 }} src={images} />
                 </IconButton>
               </Tooltip>
               <Menu
@@ -145,8 +194,16 @@ function ResponsiveAppBar() {
                   horizontal: "right",
                 }}
                 open={Boolean(anchorElUser)}
-                onClose={handleCloseNavMenu}
-              ></Menu>
+                onClose={handleCloseUserMenu}
+              >
+                <MenuItem onClick={() => handleNavigate("/profil")}>
+                  Mon profil
+                </MenuItem>
+                <MenuItem onClick={() => handleNavigate("/message")}>
+                  Messages
+                </MenuItem>
+                <MenuItem onClick={handleLogout}>Déconnexion</MenuItem>
+              </Menu>
             </Box>
           </Toolbar>
         </Container>

@@ -8,7 +8,7 @@ const Header = () => {
       <nav>
         <ul className={styles.navList}>
           <li>
-            <Link href="/rgba" legacyBehavior>
+            <Link href="/mentionlegal" legacyBehavior>
               <a className={styles.link}>Mention légal</a>
             </Link>
           </li>
@@ -23,6 +23,7 @@ const Header = () => {
             </Link>
           </li>
         </ul>
+        <p>© 2024 Canin Epanoui. Tous droits réservés.</p>
       </nav>
     </header>
   );

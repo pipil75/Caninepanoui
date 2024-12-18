@@ -13,7 +13,7 @@ import { auth, database } from "../../lib/firebase";
 import { ref, update, get } from "firebase/database";
 import { updatePassword, onAuthStateChanged } from "firebase/auth";
 import ResponsiveAppBar from "../navbar";
-import Header from "../../header";
+import Header from "../header";
 const theme = createTheme({
   palette: {
     primary: {

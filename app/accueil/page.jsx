@@ -17,7 +17,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getAuth, onAuthStateChanged } from "firebase/auth"; // Importer l'authentification Firebase
 import CookieAccepter from "../component/cookie/page";
-import Header from "../../header";
+import Header from "../header";
 export default function MultiActionAreaCard() {
   const [loading, setLoading] = useState(true); // Pour le chargement initial
   const [users, setUsers] = useState([]); // Pour stocker les utilisateurs
