@@ -22,7 +22,7 @@ const theme = createTheme({
       main: "#847774", // Fond de la barre de navigation
     },
     secondary: {
-      main: "#FFFFFF", // Couleur des liens pour un bon contraste
+      main: "#FCFEF7", // Couleur des liens pour un bon contraste
     },
   },
   typography: {
