@@ -4,14 +4,12 @@ import AppBar from "@mui/material/AppBar";
 import Box from "@mui/material/Box";
 import Toolbar from "@mui/material/Toolbar";
 import IconButton from "@mui/material/IconButton";
-import Menu from "@mui/material/Menu";
 import Image from "next/image";
 import Container from "@mui/material/Container";
 import Avatar from "@mui/material/Avatar";
 import Button from "@mui/material/Button";
-import Tooltip from "@mui/material/Tooltip";
+import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
-import { ref, get } from "firebase/database";
 import { auth, database } from "../lib/firebase";
 import { useRouter } from "next/navigation";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
@@ -20,7 +18,10 @@ import useMediaQuery from "@mui/material/useMediaQuery";
 const theme = createTheme({
   palette: {
     primary: {
-      main: "#847774",
+      main: "#847774", // Fond de la barre
+    },
+    secondary: {
+      main: "#FFFFFF", // Couleur des boutons
     },
   },
   typography: {
@@ -33,30 +34,12 @@ const theme = createTheme({
 
 function ResponsiveAppBar() {
   const [anchorElNav, setAnchorElNav] = React.useState(null);
-  const [anchorElUser, setAnchorElUser] = React.useState(null);
-  const [images, setImages] = React.useState(null);
-  const [role, setRole] = React.useState(null);
   const router = useRouter();
   const isMobile = useMediaQuery("(max-width:600px)");
 
-  React.useEffect(() => {
-    const userId = auth.currentUser?.uid;
-    if (userId) {
-      const imageRef = ref(database, `users/${userId}/image`);
-      get(imageRef).then((snapshot) => {
-        if (snapshot.exists()) {
-          setImages(snapshot.val());
-        }
-      });
-
-      const roleRef = ref(database, `users/${userId}/role`);
-      get(roleRef).then((snapshot) => {
-        if (snapshot.exists()) {
-          setRole(snapshot.val());
-        }
-      });
-    }
-  }, []);
+  const handleNavigate = (path) => {
+    router.push(path);
+  };
 
   const handleOpenNavMenu = (event) => {
     setAnchorElNav(event.currentTarget);
@@ -66,28 +49,15 @@ function ResponsiveAppBar() {
     setAnchorElNav(null);
   };
 
-  const handleOpenUserMenu = (event) => {
-    setAnchorElUser(event.currentTarget);
-  };
-
-  const handleCloseUserMenu = () => {
-    setAnchorElUser(null);
-  };
-
   const handleLogout = () => {
     auth.signOut();
     router.push("/connexion");
   };
 
-  const handleNavigate = (path) => {
-    router.push(path);
-    handleCloseNavMenu();
-  };
-
   const menuItems = [
     { label: "Accueil", path: "/", visible: true },
     { label: "Mon profil", path: "/profil", visible: true },
-    { label: "Messages", path: "/message", visible: !!role },
+    { label: "Messages", path: "/message", visible: true },
     { label: "Déconnexion", path: null, visible: true, action: handleLogout },
   ];
 
@@ -96,20 +66,29 @@ function ResponsiveAppBar() {
       <AppBar position="static">
         <Container maxWidth="xl">
           <Toolbar disableGutters>
-            <Image
-              alt="logo chien"
-              width={isMobile ? 50 : 100}
-              height={isMobile ? 50 : 100}
-              src="/images/blob.png"
-            />
+            {/* Logo cliquable pour revenir à l'accueil */}
+            <Box
+              onClick={() => handleNavigate("/")}
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                cursor: "pointer",
+              }}
+            >
+              <Image
+                alt="logo chien"
+                width={isMobile ? 50 : 100}
+                height={isMobile ? 50 : 100}
+                src="/images/blob.png"
+              />
+            </Box>
 
             {/* Desktop Navigation */}
             <Box
               sx={{
                 flexGrow: 1,
                 display: { xs: "none", md: "flex" },
-                justifyContent: "space-between", // Added to evenly space links
-                alignItems: "center", // Ensures alignment in case of different heights
+                justifyContent: "flex-end",
               }}
             >
               {menuItems.map(
@@ -120,7 +99,15 @@ function ResponsiveAppBar() {
                       onClick={() =>
                         item.action ? item.action() : handleNavigate(item.path)
                       }
-                      sx={{ my: 2, color: "white", display: "block" }}
+                      sx={{
+                        my: 2,
+                        color: theme.palette.secondary.main,
+                        backgroundColor: theme.palette.primary.main,
+                        "&:hover": {
+                          backgroundColor: "#6c635e",
+                        },
+                        marginLeft: 2,
+                      }}
                     >
                       {item.label}
                     </Button>
@@ -128,7 +115,7 @@ function ResponsiveAppBar() {
               )}
             </Box>
 
-            {/* Mobile Navigation */}
+            {/* Mobile Navigation - Menu Burger */}
             <Box sx={{ flexGrow: 1, display: { xs: "flex", md: "none" } }}>
               <IconButton
                 size="large"
@@ -138,7 +125,7 @@ function ResponsiveAppBar() {
                 onClick={handleOpenNavMenu}
                 color="inherit"
               >
-                <Avatar sx={{ bgcolor: "#847774" }} alt="photo de profil">
+                <Avatar sx={{ bgcolor: "#847774" }} alt="Menu">
                   ☰
                 </Avatar>
               </IconButton>
@@ -175,37 +162,22 @@ function ResponsiveAppBar() {
               </Menu>
             </Box>
 
-            {/* User Profile Section */}
-            <Box sx={{ flexGrow: 0 }}>
-              <Tooltip title="Open settings">
-                <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
-                  <Avatar sx={{ width: 56, height: 56 }} src={images} />
-                </IconButton>
-              </Tooltip>
-              <Menu
-                sx={{ mt: "45px" }}
-                id="menu-appbar"
-                anchorEl={anchorElUser}
-                anchorOrigin={{
-                  vertical: "top",
-                  horizontal: "right",
+            {/* Avatar qui redirige directement vers l'accueil */}
+            <Box
+              sx={{
+                flexGrow: 0,
+                cursor: "pointer",
+              }}
+              onClick={() => handleNavigate("/")}
+            >
+              <Avatar
+                sx={{
+                  width: 56,
+                  height: 56,
+                  backgroundColor: theme.palette.primary.main,
+                  color: theme.palette.secondary.main,
                 }}
-                keepMounted
-                transformOrigin={{
-                  vertical: "top",
-                  horizontal: "right",
-                }}
-                open={Boolean(anchorElUser)}
-                onClose={handleCloseUserMenu}
-              >
-                <MenuItem onClick={() => handleNavigate("/profil")}>
-                  Mon profil
-                </MenuItem>
-                <MenuItem onClick={() => handleNavigate("/message")}>
-                  Messages
-                </MenuItem>
-                <MenuItem onClick={handleLogout}>Déconnexion</MenuItem>
-              </Menu>
+              />
             </Box>
           </Toolbar>
         </Container>
