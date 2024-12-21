@@ -1,4 +1,4 @@
-"use client"; // Important ici
+"use client";
 
 import { ref, push, update } from "firebase/database";
 import { auth, database } from "../../../lib/firebase";
@@ -7,9 +7,12 @@ export const sendMessageToBothSides = async ({
   message,
   recipientId,
   recipientRole,
+  isReply = false,
+  originalMessageId = null,
 }) => {
   try {
     const currentUser = auth.currentUser;
+
     if (!currentUser) {
       throw new Error("Utilisateur non authentifié.");
     }
@@ -18,36 +21,53 @@ export const sendMessageToBothSides = async ({
       throw new Error("Le message ne peut pas être vide.");
     }
 
+    // Rôle de l'expéditeur
+    const senderRole = recipientRole === "pro" ? "user" : "pro";
+
+    // Données du message ou de la réponse
     const messageData = {
       message: message.trim(),
       senderId: currentUser.uid,
-      senderName: currentUser.displayName || "Utilisateur",
+      senderRole,
       senderEmail: currentUser.email,
       recipientId,
       recipientRole,
       timestamp: new Date().toISOString(),
     };
 
-    const senderRole = currentUser.uid === recipientId ? "pro" : "user";
-    const senderRef = ref(
-      database,
-      `users/${senderRole}/${currentUser.uid}/messages`
-    );
-    const recipientRef = ref(
-      database,
-      `users/${recipientRole}/${recipientId}/messages`
-    );
-
-    const messageKey = push(senderRef).key;
-
     const updates = {};
-    updates[`users/${recipientRole}/${recipientId}/messages/${messageKey}`] =
-      messageData;
-    updates[`users/${senderRole}/${currentUser.uid}/messages/${messageKey}`] =
-      messageData;
 
+    if (isReply && originalMessageId) {
+      // Ajouter une réponse sous le message parent
+      const senderReplyPath = `users/${senderRole}/${currentUser.uid}/messages/${originalMessageId}/replies`;
+      const recipientReplyPath = `users/${recipientRole}/${recipientId}/messages/${originalMessageId}/replies`;
+
+      const newReplyKey = push(ref(database, senderReplyPath)).key;
+
+      updates[`${senderReplyPath}/${newReplyKey}`] = messageData;
+      updates[`${recipientReplyPath}/${newReplyKey}`] = messageData;
+
+      console.log(
+        "Chemins des réponses :",
+        senderReplyPath,
+        recipientReplyPath
+      );
+    } else {
+      // Nouveau message
+      const senderPath = `users/${senderRole}/${currentUser.uid}/messages`;
+      const recipientPath = `users/${recipientRole}/${recipientId}/messages`;
+
+      const newMessageKey = push(ref(database, senderPath)).key;
+
+      updates[`${senderPath}/${newMessageKey}`] = messageData;
+      updates[`${recipientPath}/${newMessageKey}`] = messageData;
+
+      console.log("Chemins des messages :", senderPath, recipientPath);
+    }
+
+    // Mise à jour dans Firebase
     await update(ref(database), updates);
-
+    console.log("Message envoyé :", messageData);
     return "Message envoyé avec succès.";
   } catch (error) {
     console.error("Erreur lors de l'envoi du message :", error.message);

@@ -1,7 +1,8 @@
+// UserMessages.js
 "use client";
-import React from "react";
-import { useEffect, useState } from "react";
-import { ref, onValue, remove, push } from "firebase/database";
+
+import React, { useEffect, useState } from "react";
+import { ref, onValue, remove } from "firebase/database";
 import { auth, database } from "../../../lib/firebase";
 import {
   Card,
@@ -16,6 +17,8 @@ import {
 import { Delete, Reply } from "@mui/icons-material";
 import ResponsiveAppBar from "../../navbar";
 import Header from "../../header";
+import { sendMessageToBothSides } from "../utils/messagutil"; // Assurez-vous que le chemin est correct
+
 export default function UserMessages() {
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -49,6 +52,7 @@ export default function UserMessages() {
                 }))
               : [],
           }));
+          console.log("Messages récupérés :", messagesArray);
           setMessages(messagesArray);
         } else {
           setMessages([]);
@@ -68,22 +72,28 @@ export default function UserMessages() {
   };
 
   const handleReplySubmit = async (message) => {
-    const replyData = {
-      replyMessage: reply[message.id],
-      senderId: auth.currentUser.uid,
-      senderEmail: auth.currentUser.email,
-      recipientId: message.senderId,
-      timestamp: Date.now(),
-    };
+    if (!reply[message.id]?.trim()) {
+      alert("La réponse ne peut pas être vide.");
+      return;
+    }
 
-    const messageRef = ref(
-      database,
-      `users/user/${auth.currentUser.uid}/messages/${message.id}/replies`
-    );
-
-    await push(messageRef, replyData);
-    setReply((prev) => ({ ...prev, [message.id]: "" })); // Réinitialise la réponse pour ce message
-    alert("Réponse envoyée avec succès !");
+    try {
+      await sendMessageToBothSides({
+        message: reply[message.id],
+        recipientId: message.senderId,
+        recipientRole: message.senderRole || "user", // Assurez une valeur par défaut
+        // Assurez-vous que `senderRole` est correctement défini dans vos données
+        isReply: true,
+        originalMessageId: message.id,
+      });
+      setReply((prev) => ({ ...prev, [message.id]: "" })); // Réinitialise la réponse pour ce message
+      alert("Réponse envoyée avec succès !");
+    } catch (error) {
+      console.error("Erreur lors de l'envoi de la réponse :", error.message);
+      alert(
+        "Une erreur s'est produite lors de l'envoi de la réponse. Veuillez réessayer."
+      );
+    }
   };
 
   const handleDelete = async (messageId) => {
@@ -91,8 +101,16 @@ export default function UserMessages() {
       database,
       `users/user/${auth.currentUser.uid}/messages/${messageId}`
     );
-    await remove(messageRef);
-    alert("Message supprimé !");
+    try {
+      await remove(messageRef);
+      alert("Message supprimé !");
+    } catch (error) {
+      console.error(
+        "Erreur lors de la suppression du message :",
+        error.message
+      );
+      alert("Une erreur s'est produite lors de la suppression du message.");
+    }
   };
 
   if (loading) {
@@ -145,7 +163,7 @@ export default function UserMessages() {
                           <strong>De :</strong> {reply.senderEmail}
                         </Typography>
                         <Typography variant="body2">
-                          <strong>Message :</strong> {reply.replyMessage}
+                          <strong>Message :</strong> {reply.message}
                         </Typography>
                         <Typography variant="caption">
                           Envoyé le :{" "}

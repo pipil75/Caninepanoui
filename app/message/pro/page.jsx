@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { ref, onValue, remove, push } from "firebase/database";
+import React, { useState, useEffect } from "react";
+import { ref, onValue, remove } from "firebase/database";
 import { auth, database } from "../../../lib/firebase";
 import {
   Card,
@@ -13,18 +13,21 @@ import {
   Grid,
 } from "@mui/material";
 import { Delete, Reply } from "@mui/icons-material";
-import ResponsiveAppBar from "@/app/navbar";
+import ResponsiveAppBar from "../../navbar";
+import Header from "../../header";
+import { sendMessageToBothSides } from "../utils/messagutil";
+
 export default function ProMessages() {
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [reply, setReply] = useState({}); // Réponses par message ID
 
   useEffect(() => {
-    const fetchProMessages = async () => {
+    const fetchProMessages = () => {
       const currentUser = auth.currentUser;
 
       if (!currentUser) {
-        console.error("Professionnel non authentifié.");
+        console.error("Utilisateur non authentifié.");
         setLoading(false);
         return;
       }
@@ -35,8 +38,6 @@ export default function ProMessages() {
       onValue(messagesRef, (snapshot) => {
         if (snapshot.exists()) {
           const data = snapshot.val();
-
-          // Inclure les réponses pour chaque message
           const messagesArray = Object.keys(data).map((key) => ({
             id: key,
             ...data[key],
@@ -47,6 +48,7 @@ export default function ProMessages() {
                 }))
               : [],
           }));
+          console.log("Messages récupérés avec réponses :", messagesArray);
           setMessages(messagesArray);
         } else {
           setMessages([]);
@@ -66,31 +68,55 @@ export default function ProMessages() {
   };
 
   const handleReplySubmit = async (message) => {
-    const replyData = {
-      replyMessage: reply[message.id],
-      senderId: auth.currentUser.uid,
-      senderEmail: auth.currentUser.email,
-      recipientId: message.senderId,
-      timestamp: Date.now(),
-    };
+    const replyMessage = reply[message.id]; // Récupère la réponse depuis l'état
+    if (!replyMessage?.trim()) {
+      alert("Le message de réponse ne peut pas être vide.");
+      return;
+    }
 
-    const messageRef = ref(
-      database,
-      `users/pro/${auth.currentUser.uid}/messages/${message.id}/replies`
-    );
+    try {
+      console.log("ID du message parent :", message.id); // Debug
+      console.log("ID du destinataire :", message.senderId);
 
-    await push(messageRef, replyData);
-    setReply((prev) => ({ ...prev, [message.id]: "" })); // Réinitialise la réponse pour ce message
-    alert("Réponse envoyée avec succès !");
+      await sendMessageToBothSides({
+        message: replyMessage,
+        recipientId: message.senderId, // L'expéditeur du message devient le destinataire
+        recipientRole: "user", // Le pro répond au user
+        isReply: true,
+        originalMessageId: message.id, // Passe l'ID du message parent
+      });
+
+      setReply((prev) => ({ ...prev, [message.id]: "" })); // Réinitialise le champ de réponse
+      alert("Réponse envoyée avec succès !");
+    } catch (error) {
+      console.error("Erreur lors de l'envoi de la réponse :", error.message);
+      alert("Une erreur est survenue lors de l'envoi de la réponse.");
+    }
   };
 
   const handleDelete = async (messageId) => {
+    const currentUser = auth.currentUser;
+
+    if (!currentUser) {
+      alert("Utilisateur non authentifié.");
+      return;
+    }
+
     const messageRef = ref(
       database,
-      `users/pro/${auth.currentUser.uid}/messages/${messageId}`
+      `users/pro/${currentUser.uid}/messages/${messageId}`
     );
-    await remove(messageRef);
-    alert("Message supprimé !");
+
+    try {
+      await remove(messageRef);
+      alert("Message supprimé !");
+    } catch (error) {
+      console.error(
+        "Erreur lors de la suppression du message :",
+        error.message
+      );
+      alert("Une erreur est survenue lors de la suppression du message.");
+    }
   };
 
   if (loading) {
@@ -105,7 +131,7 @@ export default function ProMessages() {
     <Box sx={{ padding: 4 }}>
       <ResponsiveAppBar />
       <Typography variant="h4" gutterBottom>
-        Messages
+        Messages Pro
       </Typography>
       <Grid container spacing={3}>
         {messages.map((message) => (
@@ -113,41 +139,39 @@ export default function ProMessages() {
             <Card sx={{ boxShadow: 3 }}>
               <CardContent>
                 <Typography variant="h6" gutterBottom>
-                  De : {message.senderEmail}
+                  De : {message.senderEmail || "Inconnu"}
                 </Typography>
                 <Typography variant="body1">
-                  <strong>Message :</strong> {message.message}
+                  <strong>Message :</strong>{" "}
+                  {message.message || "Pas de contenu"}
                 </Typography>
                 <Typography
                   variant="caption"
                   sx={{ display: "block", marginTop: 1 }}
                 >
-                  Envoyé le : {new Date(message.timestamp).toLocaleString()}
+                  Envoyé le :{" "}
+                  {message.timestamp
+                    ? new Date(message.timestamp).toLocaleString()
+                    : "Inconnu"}
                 </Typography>
 
-                {/* Affichage des réponses */}
                 {message.replies && message.replies.length > 0 && (
-                  <Box sx={{ marginTop: 2 }}>
+                  <Box>
                     <Typography variant="subtitle1">Réponses :</Typography>
                     {message.replies.map((reply) => (
-                      <Box
-                        key={reply.id}
-                        sx={{
-                          border: "1px solid #ddd",
-                          borderRadius: "8px",
-                          padding: "8px",
-                          marginBottom: "8px",
-                        }}
-                      >
+                      <Box key={reply.id} sx={{ marginBottom: "8px" }}>
                         <Typography variant="body2">
-                          <strong>De :</strong> {reply.senderEmail}
+                          <strong>De :</strong> {reply.senderEmail || "Inconnu"}
                         </Typography>
                         <Typography variant="body2">
-                          <strong>Message :</strong> {reply.replyMessage}
+                          <strong>Message :</strong>{" "}
+                          {reply.message || "Pas de contenu"}
                         </Typography>
                         <Typography variant="caption">
                           Envoyé le :{" "}
-                          {new Date(reply.timestamp).toLocaleString()}
+                          {reply.timestamp
+                            ? new Date(reply.timestamp).toLocaleString()
+                            : "Inconnu"}
                         </Typography>
                       </Box>
                     ))}
@@ -191,6 +215,7 @@ export default function ProMessages() {
           </Grid>
         ))}
       </Grid>
+      <Header />
     </Box>
   );
 }

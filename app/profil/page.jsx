@@ -14,6 +14,7 @@ import { ref, update, get } from "firebase/database";
 import { updatePassword, onAuthStateChanged } from "firebase/auth";
 import ResponsiveAppBar from "../navbar";
 import Header from "../header";
+
 const theme = createTheme({
   palette: {
     primary: {
@@ -111,7 +112,16 @@ export default function Cardprofil() {
   return (
     <ThemeProvider theme={theme}>
       <ResponsiveAppBar />
-      <div className="container">
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          minHeight: "calc(100vh - 200px)", // Ajustez en fonction de la hauteur navbar/footer
+          padding: 2,
+          boxSizing: "border-box",
+        }}
+      >
         <Card sx={{ maxWidth: 600, backgroundColor: "primary.main" }}>
           <CardContent>
             <Typography
@@ -217,7 +227,7 @@ export default function Cardprofil() {
             )}
           </CardActions>
         </Card>
-      </div>
+      </Box>
       <Header />
     </ThemeProvider>
   );
