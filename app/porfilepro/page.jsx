@@ -74,9 +74,6 @@ export default function ProfessionalAppointments() {
           <ListItem key={appointment.id}>
             <Card sx={{ width: "100%", mb: 2 }}>
               <CardContent>
-                <Typography variant="h6">
-                  Rendez-vous avec {appointment.userName}
-                </Typography>
                 <Typography>Email: {appointment.userEmail}</Typography>
                 <Typography>Date: {appointment.date}</Typography>
                 <Typography>Heure: {appointment.time}</Typography>

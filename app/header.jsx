@@ -9,17 +9,23 @@ const Header = () => {
         <ul className={styles.navList}>
           <li>
             <Link href="/mentionlegal" legacyBehavior>
-              <a className={styles.link}>Mention légal</a>
+              <a className={styles.link} aria-label="mention legal">
+                Mention légal
+              </a>
             </Link>
           </li>
           <li>
             <Link href="/about" legacyBehavior>
-              <a className={styles.link}>À propos de nous</a>
+              <a className={styles.link} aria-label=" a propos">
+                À propos de nous
+              </a>
             </Link>
           </li>
           <li>
             <Link href="/contact" legacyBehavior>
-              <a className={styles.link}>Contact</a>
+              <a className={styles.link} aria-label="contact">
+                Contact
+              </a>
             </Link>
           </li>
         </ul>

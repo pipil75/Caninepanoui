@@ -20,13 +20,22 @@ import useMediaQuery from "@mui/material/useMediaQuery";
 const theme = createTheme({
   palette: {
     primary: {
-      main: "#847774",
+      main: "#FCFEF7", // Couleur principale avec bon contraste
+      contrastText: "#000000", // Texte foncé pour un meilleur contraste
+    },
+    secondary: {
+      main: "#72B07E", // Couleur secondaire
+      contrastText: "#FFFFFF", // Texte clair pour bon contraste
     },
   },
-  typography: {
-    h3: {
-      fontSize: "2.5rem",
-      fontWeight: "bold",
+  components: {
+    MuiButton: {
+      styleOverrides: {
+        root: {
+          textTransform: "none", // Désactiver les majuscules par défaut
+          fontWeight: 600, // Rendre le texte plus lisible
+        },
+      },
     },
   },
 });
@@ -138,7 +147,12 @@ function ResponsiveAppBar() {
                 onClick={handleOpenNavMenu}
                 color="inherit"
               >
-                <Avatar sx={{ bgcolor: "#847774" }}>☰</Avatar>
+                <Avatar
+                  sx={{ bgcolor: "#847774" }}
+                  alt="Photo de profil de l'utilisateur"
+                >
+                  ☰
+                </Avatar>
               </IconButton>
               <Menu
                 id="menu-appbar"

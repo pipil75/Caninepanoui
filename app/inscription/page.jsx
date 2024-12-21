@@ -27,10 +27,22 @@ import styles from "../connexion/Connexion.module.css";
 const theme = createTheme({
   palette: {
     primary: {
-      main: "#FCFEF7",
+      main: "#FCFEF7", // Couleur principale avec bon contraste
+      contrastText: "#000000", // Texte foncé pour un meilleur contraste
     },
     secondary: {
-      main: "#72B07E",
+      main: "#72B07E", // Couleur secondaire
+      contrastText: "#FFFFFF", // Texte clair pour bon contraste
+    },
+  },
+  components: {
+    MuiButton: {
+      styleOverrides: {
+        root: {
+          textTransform: "none", // Désactiver les majuscules par défaut
+          fontWeight: 600, // Rendre le texte plus lisible
+        },
+      },
     },
   },
 });
@@ -139,14 +151,31 @@ const MediaInscription = () => {
       setIsLoading(false); // Fin du chargement
     }
   };
-
   const handleImageChange = (e) => {
     const file = e.target.files[0];
-    if (file && file.size > 5 * 1024 * 1024) {
-      setError("La taille de l'image ne doit pas dépasser 5 MB.");
-      return;
+    const allowedTypes = ["image/jpeg", "image/png", "image/webp"]; // Formats d'image légers autorisés
+
+    if (file) {
+      // Vérifier le type de fichier
+      if (!allowedTypes.includes(file.type)) {
+        setError("Seules les images JPEG, PNG ou WebP sont acceptées.");
+        return;
+      }
+
+      // Vérifier la taille du fichier
+      if (file.size > 5 * 1024 * 1024) {
+        setError("La taille de l'image ne doit pas dépasser 5 MB.");
+        return;
+      }
+
+      // Si tout est valide, continuez le traitement
+      setError(""); // Effacer les erreurs précédentes
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        setImagePreview(event.target.result); // Afficher un aperçu si nécessaire
+      };
+      reader.readAsDataURL(file);
     }
-    setImage(file);
   };
 
   return (
@@ -284,12 +313,11 @@ const MediaInscription = () => {
                   />
                 )}
                 <input
-                  accept="image/*"
                   type="file"
+                  accept="image/jpeg, image/png, image/webp" // Restreint les types de fichiers
                   onChange={handleImageChange}
-                  required
-                  style={{ marginTop: "16px" }}
                 />
+                ;
                 <Button
                   type="submit"
                   fullWidth
