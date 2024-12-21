@@ -4,12 +4,13 @@ import AppBar from "@mui/material/AppBar";
 import Box from "@mui/material/Box";
 import Toolbar from "@mui/material/Toolbar";
 import IconButton from "@mui/material/IconButton";
+import Menu from "@mui/material/Menu";
 import Image from "next/image";
 import Container from "@mui/material/Container";
 import Avatar from "@mui/material/Avatar";
 import Button from "@mui/material/Button";
-import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
+import { ref, get } from "firebase/database";
 import { auth, database } from "../lib/firebase";
 import { useRouter } from "next/navigation";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
@@ -18,10 +19,10 @@ import useMediaQuery from "@mui/material/useMediaQuery";
 const theme = createTheme({
   palette: {
     primary: {
-      main: "#847774", // Fond de la barre
+      main: "#847774", // Fond de la barre de navigation
     },
     secondary: {
-      main: "#FFFFFF", // Couleur des boutons
+      main: "#FFFFFF", // Couleur des liens pour un bon contraste
     },
   },
   typography: {
@@ -34,12 +35,29 @@ const theme = createTheme({
 
 function ResponsiveAppBar() {
   const [anchorElNav, setAnchorElNav] = React.useState(null);
+  const [images, setImages] = React.useState(null);
+  const [role, setRole] = React.useState(null);
   const router = useRouter();
   const isMobile = useMediaQuery("(max-width:600px)");
 
-  const handleNavigate = (path) => {
-    router.push(path);
-  };
+  React.useEffect(() => {
+    const userId = auth.currentUser?.uid;
+    if (userId) {
+      const imageRef = ref(database, `users/${userId}/image`);
+      get(imageRef).then((snapshot) => {
+        if (snapshot.exists()) {
+          setImages(snapshot.val());
+        }
+      });
+
+      const roleRef = ref(database, `users/${userId}/role`);
+      get(roleRef).then((snapshot) => {
+        if (snapshot.exists()) {
+          setRole(snapshot.val());
+        }
+      });
+    }
+  }, []);
 
   const handleOpenNavMenu = (event) => {
     setAnchorElNav(event.currentTarget);
@@ -47,6 +65,11 @@ function ResponsiveAppBar() {
 
   const handleCloseNavMenu = () => {
     setAnchorElNav(null);
+  };
+
+  const handleNavigate = (path) => {
+    router.push(path);
+    handleCloseNavMenu();
   };
 
   const handleLogout = () => {
@@ -57,7 +80,7 @@ function ResponsiveAppBar() {
   const menuItems = [
     { label: "Accueil", path: "/", visible: true },
     { label: "Mon profil", path: "/profil", visible: true },
-    { label: "Messages", path: "/message", visible: true },
+    { label: "Messages", path: "/message", visible: !!role },
     { label: "Déconnexion", path: null, visible: true, action: handleLogout },
   ];
 
@@ -104,9 +127,10 @@ function ResponsiveAppBar() {
                         color: theme.palette.secondary.main,
                         backgroundColor: theme.palette.primary.main,
                         "&:hover": {
-                          backgroundColor: "#6c635e",
+                          backgroundColor: "#6c635e", // Couleur au survol
                         },
                         marginLeft: 2,
+                        borderRadius: "8px",
                       }}
                     >
                       {item.label}
@@ -162,7 +186,7 @@ function ResponsiveAppBar() {
               </Menu>
             </Box>
 
-            {/* Avatar qui redirige directement vers l'accueil */}
+            {/* Avatar redirige directement vers l'accueil */}
             <Box
               sx={{
                 flexGrow: 0,
@@ -177,6 +201,8 @@ function ResponsiveAppBar() {
                   backgroundColor: theme.palette.primary.main,
                   color: theme.palette.secondary.main,
                 }}
+                src={images}
+                alt="Photo de profil"
               />
             </Box>
           </Toolbar>
