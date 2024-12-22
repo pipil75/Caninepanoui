@@ -108,10 +108,7 @@ export default function MediaCard() {
           sx={{ maxWidth: 600, backgroundColor: theme.palette.primary.main }}
         >
           <CardContent>
-            <Typography
-              variant="h3"
-              sx={{ color: theme.palette.secondary.main }}
-            >
+            <Typography sx={{ color: theme.palette.secondary.main }}>
               <h1>Connectez-vous</h1>
             </Typography>
           </CardContent>
