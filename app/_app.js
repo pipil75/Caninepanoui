@@ -1,17 +1,24 @@
 import { useEffect } from "react";
+import { GoogleAnalytics } from "nextjs-google-analytics";
+import { useEffect } from "react";
+import { useRouter } from "next/router";
+
+const GA_TRACKING_ID = "G-274LZXS5W8"; // Votre vrai ID Google Analytics
 
 function MyApp({ Component, pageProps }) {
+  const router = useRouter();
+
   useEffect(() => {
     // Initialisation de Google Analytics
     const handleRouteChange = (url) => {
-      window.gtag("config", "G-274LZXS5W8", {
+      window.gtag("config", GA_TRACKING_ID, {
         page_path: url,
       });
     };
 
-    // Chargement du script Google Analytics
+    // Chargement des scripts Google Analytics
     const script1 = document.createElement("script");
-    script1.src = "https://www.googletagmanager.com/gtag/js?id=G-D59W60T63Z";
+    script1.src = `https://www.googletagmanager.com/gtag/js?id=${GA_TRACKING_ID}`;
     script1.async = true;
     document.head.appendChild(script1);
 
@@ -20,18 +27,17 @@ function MyApp({ Component, pageProps }) {
       window.dataLayer = window.dataLayer || [];
       function gtag(){dataLayer.push(arguments);}
       gtag('js', new Date());
-      gtag('config', 'G-D59W60T63Z');
+      gtag('config', '${GA_TRACKING_ID}');
     `;
     document.head.appendChild(script2);
 
-    // Suivi des changements de page
-    const handleRouteComplete = (url) => handleRouteChange(url);
-    window.addEventListener("routeChangeComplete", handleRouteComplete);
+    // Suivi des changements de route avec Next.js Router
+    router.events.on("routeChangeComplete", handleRouteChange);
 
     return () => {
-      window.removeEventListener("routeChangeComplete", handleRouteComplete);
+      router.events.off("routeChangeComplete", handleRouteChange);
     };
-  }, []);
+  }, [router.events]);
 
   return <Component {...pageProps} />;
 }
