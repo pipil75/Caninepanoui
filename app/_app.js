@@ -1,24 +1,37 @@
-import Script from "next/script";
+import { Html, Head, Main, NextScript } from "next/document";
 
-function MyApp({ Component, pageProps }) {
+export default function Document() {
   return (
-    <>
-      {/* Google Analytics Script */}
-      <Script
-        strategy="afterInteractive"
-        src={`https://www.googletagmanager.com/gtag/js?id=G-D59W60T63Z`}
-      />
-      <Script id="google-analytics" strategy="afterInteractive">
-        {`
-          window.dataLayer = window.dataLayer || [];
-          function gtag(){dataLayer.push(arguments);}
-          gtag('js', new Date());
-          gtag('config', 'G-D59W60T63Z');
-        `}
-      </Script>
-      <Component {...pageProps} />
-    </>
+    <Html>
+      <Head>
+        {/* Google Tag Manager */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+              new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+              j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+              'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+              })(window,document,'script','dataLayer','GTM-WNJMXB6W');
+            `,
+          }}
+        />
+        {/* End Google Tag Manager */}
+      </Head>
+      <body>
+        {/* Google Tag Manager (noscript) */}
+        <noscript>
+          <iframe
+            src="https://www.googletagmanager.com/ns.html?id=GTM-WNJMXB6W"
+            height="0"
+            width="0"
+            style={{ display: "none", visibility: "hidden" }}
+          ></iframe>
+        </noscript>
+        {/* End Google Tag Manager (noscript) */}
+        <Main />
+        <NextScript />
+      </body>
+    </Html>
   );
 }
-
-export default MyApp;
