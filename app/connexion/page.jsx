@@ -112,7 +112,7 @@ export default function MediaCard() {
               variant="h3"
               sx={{ color: theme.palette.secondary.main }}
             >
-              Connectez-vous
+              <h1>Connectez-vous</h1>
             </Typography>
           </CardContent>
           <CardActions>

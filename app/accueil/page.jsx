@@ -102,13 +102,15 @@ export default function MultiActionAreaCard() {
           fontWeight: "bold",
         }}
       >
-        Bienvenue sur notre plateforme ! Ici, vous trouverez une liste complète
-        des éducateurs disponibles pour vous accompagner dans vos besoins. Que
-        ce soit pour du soutien, des conseils ou un suivi personnalisé, chaque
-        éducateur propose des compétences spécifiques pour vous aider à
-        atteindre vos objectifs. N'hésitez pas à explorer les profils pour
-        découvrir leurs domaines d'expertise et à les contacter pour toute
-        question !
+        <h1>
+          Bienvenue sur notre plateforme ! Ici, vous trouverez une liste
+          complète des éducateurs disponibles pour vous accompagner dans vos
+          besoins. Que ce soit pour du soutien, des conseils ou un suivi
+          personnalisé, chaque éducateur propose des compétences spécifiques
+          pour vous aider à atteindre vos objectifs. N'hésitez pas à explorer
+          les profils pour découvrir leurs domaines d'expertise et à les
+          contacter pour toute question !
+        </h1>
       </Typography>
 
       {/* Conteneur des cartes */}

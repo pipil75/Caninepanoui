@@ -44,14 +44,13 @@ export const sendMessageToBothSides = async ({
 
       const newReplyKey = push(ref(database, senderReplyPath)).key;
 
-      updates[`${senderReplyPath}/${newReplyKey}`] = messageData;
-      updates[`${recipientReplyPath}/${newReplyKey}`] = messageData;
+      updates[`${senderReplyPath}/${newReplyKey}`] = messageData; // Réponse côté expéditeur
+      updates[`${recipientReplyPath}/${newReplyKey}`] = messageData; // Réponse côté destinataire
 
-      console.log(
-        "Chemins des réponses :",
+      console.log("Chemins des réponses : ", {
         senderReplyPath,
-        recipientReplyPath
-      );
+        recipientReplyPath,
+      });
     } else {
       // Nouveau message
       const senderPath = `users/${senderRole}/${currentUser.uid}/messages`;
@@ -62,15 +61,15 @@ export const sendMessageToBothSides = async ({
       updates[`${senderPath}/${newMessageKey}`] = messageData;
       updates[`${recipientPath}/${newMessageKey}`] = messageData;
 
-      console.log("Chemins des messages :", senderPath, recipientPath);
+      console.log("Chemins des messages : ", { senderPath, recipientPath });
     }
 
     // Mise à jour dans Firebase
     await update(ref(database), updates);
-    console.log("Message envoyé :", messageData);
+    console.log("Mise à jour Firebase réussie : ", updates);
     return "Message envoyé avec succès.";
   } catch (error) {
-    console.error("Erreur lors de l'envoi du message :", error.message);
+    console.error("Erreur lors de l'envoi du message : ", error.message);
     throw new Error(error.message);
   }
 };
