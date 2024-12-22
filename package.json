@@ -20,6 +20,7 @@
     "@paypal/checkout-server-sdk": "^1.0.3",
     "@paypal/react-paypal-js": "^8.7.0",
     "@sendgrid/mail": "^8.1.4",
+    "@vercel/analytics": "^1.4.1",
     "cookies-next": "^4.3.0",
     "firebase": "^10.14.1",
     "nextjs-google-analytics": "^2.3.7",
