@@ -81,7 +81,7 @@ export default function ProMessages() {
       await sendMessageToBothSides({
         message: replyMessage,
         recipientId: message.senderId, // L'expéditeur du message devient le destinataire
-        recipientRole: "user", // Le pro répond au user
+        recipientRole: "user", // Le pro répond à l'utilisateur
         isReply: true,
         originalMessageId: message.id, // Passe l'ID du message parent
       });
@@ -123,98 +123,101 @@ export default function ProMessages() {
     return <p>Chargement des messages...</p>;
   }
 
-  if (!messages.length) {
-    return <p>Aucun message trouvé.</p>;
-  }
-
   return (
     <Box sx={{ padding: 4 }}>
       <ResponsiveAppBar />
       <Typography variant="h4" gutterBottom>
         Messages Pro
       </Typography>
-      <Grid container spacing={3}>
-        {messages.map((message) => (
-          <Grid item xs={12} md={6} key={message.id}>
-            <Card sx={{ boxShadow: 3 }}>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>
-                  De : {message.senderEmail || "Inconnu"}
-                </Typography>
-                <Typography variant="body1">
-                  <strong>Message :</strong>{" "}
-                  {message.message || "Pas de contenu"}
-                </Typography>
-                <Typography
-                  variant="caption"
-                  sx={{ display: "block", marginTop: 1 }}
-                >
-                  Envoyé le :{" "}
-                  {message.timestamp
-                    ? new Date(message.timestamp).toLocaleString()
-                    : "Inconnu"}
-                </Typography>
+      {messages.length === 0 ? (
+        <Typography variant="h6" color="text.secondary">
+          Aucun message trouvé.
+        </Typography>
+      ) : (
+        <Grid container spacing={3}>
+          {messages.map((message) => (
+            <Grid item xs={12} md={6} key={message.id}>
+              <Card sx={{ boxShadow: 3 }}>
+                <CardContent>
+                  <Typography variant="h6" gutterBottom>
+                    De : {message.senderEmail || "Inconnu"}
+                  </Typography>
+                  <Typography variant="body1">
+                    <strong>Message :</strong>{" "}
+                    {message.message || "Pas de contenu"}
+                  </Typography>
+                  <Typography
+                    variant="caption"
+                    sx={{ display: "block", marginTop: 1 }}
+                  >
+                    Envoyé le :{" "}
+                    {message.timestamp
+                      ? new Date(message.timestamp).toLocaleString()
+                      : "Inconnu"}
+                  </Typography>
 
-                {message.replies && message.replies.length > 0 && (
-                  <Box>
-                    <Typography variant="subtitle1">Réponses :</Typography>
-                    {message.replies.map((reply) => (
-                      <Box key={reply.id} sx={{ marginBottom: "8px" }}>
-                        <Typography variant="body2">
-                          <strong>De :</strong> {reply.senderEmail || "Inconnu"}
-                        </Typography>
-                        <Typography variant="body2">
-                          <strong>Message :</strong>{" "}
-                          {reply.message || "Pas de contenu"}
-                        </Typography>
-                        <Typography variant="caption">
-                          Envoyé le :{" "}
-                          {reply.timestamp
-                            ? new Date(reply.timestamp).toLocaleString()
-                            : "Inconnu"}
-                        </Typography>
-                      </Box>
-                    ))}
-                  </Box>
-                )}
+                  {message.replies && message.replies.length > 0 && (
+                    <Box>
+                      <Typography variant="subtitle1">Réponses :</Typography>
+                      {message.replies.map((reply) => (
+                        <Box key={reply.id} sx={{ marginBottom: "8px" }}>
+                          <Typography variant="body2">
+                            <strong>De :</strong>{" "}
+                            {reply.senderEmail || "Inconnu"}
+                          </Typography>
+                          <Typography variant="body2">
+                            <strong>Message :</strong>{" "}
+                            {reply.message || "Pas de contenu"}
+                          </Typography>
+                          <Typography variant="caption">
+                            Envoyé le :{" "}
+                            {reply.timestamp
+                              ? new Date(reply.timestamp).toLocaleString()
+                              : "Inconnu"}
+                          </Typography>
+                        </Box>
+                      ))}
+                    </Box>
+                  )}
 
-                {/* Formulaire de réponse */}
-                <Box sx={{ marginTop: 2 }}>
-                  <TextField
-                    fullWidth
-                    size="small"
-                    placeholder="Répondre..."
-                    value={reply[message.id] || ""}
-                    onChange={(e) =>
-                      handleReplyChange(message.id, e.target.value)
-                    }
-                  />
-                  <Box sx={{ marginTop: 1, display: "flex", gap: 1 }}>
-                    <Button
-                      variant="contained"
-                      color="primary"
+                  {/* Formulaire de réponse */}
+                  <Box sx={{ marginTop: 2 }}>
+                    <TextField
+                      fullWidth
                       size="small"
-                      startIcon={<Reply />}
-                      onClick={() => handleReplySubmit(message)}
-                    >
-                      Répondre
-                    </Button>
-                    <Button
-                      variant="outlined"
-                      color="error"
-                      size="small"
-                      startIcon={<Delete />}
-                      onClick={() => handleDelete(message.id)}
-                    >
-                      Supprimer
-                    </Button>
+                      placeholder="Répondre..."
+                      value={reply[message.id] || ""}
+                      onChange={(e) =>
+                        handleReplyChange(message.id, e.target.value)
+                      }
+                    />
+                    <Box sx={{ marginTop: 1, display: "flex", gap: 1 }}>
+                      <Button
+                        variant="contained"
+                        color="primary"
+                        size="small"
+                        startIcon={<Reply />}
+                        onClick={() => handleReplySubmit(message)}
+                      >
+                        Répondre
+                      </Button>
+                      <Button
+                        variant="outlined"
+                        color="error"
+                        size="small"
+                        startIcon={<Delete />}
+                        onClick={() => handleDelete(message.id)}
+                      >
+                        Supprimer
+                      </Button>
+                    </Box>
                   </Box>
-                </Box>
-              </CardContent>
-            </Card>
-          </Grid>
-        ))}
-      </Grid>
+                </CardContent>
+              </Card>
+            </Grid>
+          ))}
+        </Grid>
+      )}
       <Header />
     </Box>
   );
