@@ -90,10 +90,11 @@ export default function ProMessages() {
       await sendMessageToBothSides({
         message: replyMessage,
         recipientId: message.senderId,
-        recipientRole: message.senderRole,
+        recipientRole: message.senderRole || "user",
         isReply: true,
         originalMessageId: message.id,
       });
+      S;
 
       setReply((prev) => ({ ...prev, [message.id]: "" }));
       alert("Réponse envoyée avec succès !");
