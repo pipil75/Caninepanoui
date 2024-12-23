@@ -2,6 +2,7 @@
 
 import { ref, push, update } from "firebase/database";
 import { auth, database } from "../../../lib/firebase";
+
 export const sendMessageToBothSides = async ({
   message,
   recipientId,
@@ -51,6 +52,7 @@ export const sendMessageToBothSides = async ({
         senderReplyPath,
         recipientReplyPath,
         newReplyKey,
+        messageData,
       });
     } else {
       const senderPath = `users/${senderRole}/${currentUser.uid}/messages`;
@@ -58,10 +60,21 @@ export const sendMessageToBothSides = async ({
 
       const newMessageKey = push(ref(database, senderPath)).key;
 
-      updates[`${senderPath}/${newMessageKey}`] = messageData;
-      updates[`${recipientPath}/${newMessageKey}`] = messageData;
+      updates[`${senderPath}/${newMessageKey}`] = {
+        ...messageData,
+        replies: {}, // Initialise les réponses pour ce message
+      };
+      updates[`${recipientPath}/${newMessageKey}`] = {
+        ...messageData,
+        replies: {}, // Initialise les réponses pour ce message
+      };
 
-      console.log("Message enregistré :", { senderPath, recipientPath });
+      console.log("Message enregistré :", {
+        senderPath,
+        recipientPath,
+        newMessageKey,
+        messageData,
+      });
     }
 
     await update(ref(database), updates);
