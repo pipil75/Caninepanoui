@@ -35,7 +35,7 @@ export default function ProMessages() {
       }
 
       const userId = currentUser.uid;
-      const messagesRef = ref(database, `users/pro/${proId}/messages`);
+      const messagesRef = ref(database, `users/pro/${userId}/messages`);
 
       onValue(messagesRef, (snapshot) => {
         if (snapshot.exists()) {
