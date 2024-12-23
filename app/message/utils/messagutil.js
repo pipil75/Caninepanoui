@@ -1,16 +1,12 @@
-/**
- * Envoie un message ou une réponse, avec gestion des chemins Firebase.
- */
 "use client";
 
 import { ref, push, update } from "firebase/database";
 import { auth, database } from "../../../lib/firebase";
 
 /**
- * Envoie un message ou une réponse
- * @param {Object} params
+ * Envoie un message ou une réponse, avec gestion des chemins Firebase.
  */
-export const sendMessageToBothSides = async ({
+export const sendMessage = async ({
   message,
   recipientId,
   recipientRole,
@@ -33,19 +29,15 @@ export const sendMessageToBothSides = async ({
     const messageData = {
       message: message.trim(),
       senderId: currentUser.uid,
-      senderRole,
       senderEmail: currentUser.email,
+      senderRole,
       recipientId,
       recipientRole,
       timestamp: new Date().toISOString(),
     };
 
-    if (isReply) {
-      // Ajouter une réponse sous le bon message
-      if (!originalMessageId) {
-        throw new Error("Un ID de message parent est requis pour une réponse.");
-      }
-
+    if (isReply && originalMessageId) {
+      // Chemin pour les réponses
       const replyPath = `messages/${originalMessageId}/replies`;
       const newReplyKey = push(ref(database, replyPath)).key;
 
@@ -53,23 +45,23 @@ export const sendMessageToBothSides = async ({
         [`${replyPath}/${newReplyKey}`]: messageData,
       });
 
-      console.log("Réponse ajoutée :", {
+      console.log("Réponse enregistrée :", {
         replyPath,
         newReplyKey,
       });
     } else {
-      // Ajouter un nouveau message
+      // Chemin pour les messages
       const messagesPath = `messages`;
       const newMessageKey = push(ref(database, messagesPath)).key;
 
       await update(ref(database), {
         [`${messagesPath}/${newMessageKey}`]: {
           ...messageData,
-          replies: {}, // Initialise la section des réponses
+          replies: {},
         },
       });
 
-      console.log("Message ajouté :", {
+      console.log("Message enregistré :", {
         messagesPath,
         newMessageKey,
       });
