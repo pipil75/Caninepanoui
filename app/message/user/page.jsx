@@ -82,7 +82,6 @@ export default function UserMessages() {
         message: reply[message.id],
         recipientId: message.senderId,
         recipientRole: message.senderRole || "user", // Assurez une valeur par défaut
-        // Assurez-vous que `senderRole` est correctement défini dans vos données
         isReply: true,
         originalMessageId: message.id,
       });
@@ -117,100 +116,102 @@ export default function UserMessages() {
     return <p>Chargement des messages...</p>;
   }
 
-  if (!messages.length) {
-    return <p>Aucun message trouvé.</p>;
-  }
-
   return (
     <Box sx={{ padding: 4 }}>
       <ResponsiveAppBar />
       <Typography variant="h4" gutterBottom>
         Messages Utilisateur
       </Typography>
-      <Grid container spacing={3}>
-        {messages.map((message) => (
-          <Grid item xs={12} md={6} key={message.id}>
-            <Card sx={{ boxShadow: 3 }}>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>
-                  De : {message.senderEmail}
-                </Typography>
-                <Typography variant="body1">
-                  <strong>Message :</strong> {message.message}
-                </Typography>
-                <Typography
-                  variant="caption"
-                  sx={{ display: "block", marginTop: 1 }}
-                >
-                  Envoyé le : {new Date(message.timestamp).toLocaleString()}
-                </Typography>
+      {messages.length === 0 ? (
+        <Typography variant="h6" color="text.secondary">
+          Aucun message trouvé.
+        </Typography>
+      ) : (
+        <Grid container spacing={3}>
+          {messages.map((message) => (
+            <Grid item xs={12} md={6} key={message.id}>
+              <Card sx={{ boxShadow: 3 }}>
+                <CardContent>
+                  <Typography variant="h6" gutterBottom>
+                    De : {message.senderEmail}
+                  </Typography>
+                  <Typography variant="body1">
+                    <strong>Message :</strong> {message.message}
+                  </Typography>
+                  <Typography
+                    variant="caption"
+                    sx={{ display: "block", marginTop: 1 }}
+                  >
+                    Envoyé le : {new Date(message.timestamp).toLocaleString()}
+                  </Typography>
 
-                {/* Affichage des réponses */}
-                {message.replies && message.replies.length > 0 && (
+                  {/* Affichage des réponses */}
+                  {message.replies && message.replies.length > 0 && (
+                    <Box sx={{ marginTop: 2 }}>
+                      <Typography variant="subtitle1">Réponses :</Typography>
+                      {message.replies.map((reply) => (
+                        <Box
+                          key={reply.id}
+                          sx={{
+                            border: "1px solid #ddd",
+                            borderRadius: "8px",
+                            padding: "8px",
+                            marginBottom: "8px",
+                          }}
+                        >
+                          <Typography variant="body2">
+                            <strong>De :</strong> {reply.senderEmail}
+                          </Typography>
+                          <Typography variant="body2">
+                            <strong>Message :</strong> {reply.message}
+                          </Typography>
+                          <Typography variant="caption">
+                            Envoyé le :{" "}
+                            {new Date(reply.timestamp).toLocaleString()}
+                          </Typography>
+                        </Box>
+                      ))}
+                    </Box>
+                  )}
+
+                  {/* Formulaire de réponse */}
                   <Box sx={{ marginTop: 2 }}>
-                    <Typography variant="subtitle1">Réponses :</Typography>
-                    {message.replies.map((reply) => (
-                      <Box
-                        key={reply.id}
-                        sx={{
-                          border: "1px solid #ddd",
-                          borderRadius: "8px",
-                          padding: "8px",
-                          marginBottom: "8px",
-                        }}
+                    <TextField
+                      fullWidth
+                      size="small"
+                      placeholder="Répondre..."
+                      value={reply[message.id] || ""}
+                      onChange={(e) =>
+                        handleReplyChange(message.id, e.target.value)
+                      }
+                    />
+                    <Box sx={{ marginTop: 1, display: "flex", gap: 1 }}>
+                      <Button
+                        variant="contained"
+                        color="primary"
+                        size="small"
+                        startIcon={<Reply />}
+                        onClick={() => handleReplySubmit(message)}
                       >
-                        <Typography variant="body2">
-                          <strong>De :</strong> {reply.senderEmail}
-                        </Typography>
-                        <Typography variant="body2">
-                          <strong>Message :</strong> {reply.message}
-                        </Typography>
-                        <Typography variant="caption">
-                          Envoyé le :{" "}
-                          {new Date(reply.timestamp).toLocaleString()}
-                        </Typography>
-                      </Box>
-                    ))}
+                        Répondre
+                      </Button>
+                      <Button
+                        variant="outlined"
+                        color="error"
+                        size="small"
+                        startIcon={<Delete />}
+                        onClick={() => handleDelete(message.id)}
+                      >
+                        Supprimer
+                      </Button>
+                    </Box>
                   </Box>
-                )}
-
-                {/* Formulaire de réponse */}
-                <Box sx={{ marginTop: 2 }}>
-                  <TextField
-                    fullWidth
-                    size="small"
-                    placeholder="Répondre..."
-                    value={reply[message.id] || ""}
-                    onChange={(e) =>
-                      handleReplyChange(message.id, e.target.value)
-                    }
-                  />
-                  <Box sx={{ marginTop: 1, display: "flex", gap: 1 }}>
-                    <Button
-                      variant="contained"
-                      color="primary"
-                      size="small"
-                      startIcon={<Reply />}
-                      onClick={() => handleReplySubmit(message)}
-                    >
-                      Répondre
-                    </Button>
-                    <Button
-                      variant="outlined"
-                      color="error"
-                      size="small"
-                      startIcon={<Delete />}
-                      onClick={() => handleDelete(message.id)}
-                    >
-                      Supprimer
-                    </Button>
-                  </Box>
-                </Box>
-              </CardContent>
-            </Card>
-          </Grid>
-        ))}
-      </Grid>
+                </CardContent>
+              </Card>
+            </Grid>
+          ))}
+        </Grid>
+      )}
       <Header />
     </Box>
   );

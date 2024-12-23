@@ -251,7 +251,7 @@ const MediaInscription = () => {
                   required
                   fullWidth
                   id="email"
-                  label=" entré une Adresse e-mail paypal pro"
+                  label=" entré une Adresse e-mail paypal pro pour les proffesionel "
                   name="email"
                   autoComplete="email"
                   variant="standard"
