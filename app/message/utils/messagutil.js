@@ -1,7 +1,7 @@
 /**
  * Envoie un message ou une réponse, avec gestion des chemins Firebase.
  */
-("use client");
+"use client";
 
 import { ref, push, update } from "firebase/database";
 import { auth, database } from "../../../lib/firebase";
