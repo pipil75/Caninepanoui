@@ -90,7 +90,7 @@ export default function ProMessages() {
       await sendMessageToBothSides({
         message: replyMessage,
         recipientId: message.senderId,
-        recipientRole: message.senderRole || "user",
+        recipientRole: message.senderRole,
         isReply: true,
         originalMessageId: message.id,
       });
