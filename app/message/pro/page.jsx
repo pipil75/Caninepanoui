@@ -81,7 +81,7 @@ export default function ProMessages() {
       await sendMessageToBothSides({
         message: reply[message.id],
         recipientId: message.senderId,
-        recipientRole: message.senderRole || "user", // Assurez une valeur par défaut
+        recipientRole: message.senderRole || "pro", // Assurez une valeur par défaut
         isReply: true,
         originalMessageId: message.id,
       });
@@ -98,7 +98,7 @@ export default function ProMessages() {
   const handleDelete = async (messageId) => {
     const messageRef = ref(
       database,
-      `users/user/${auth.currentUser.uid}/messages/${messageId}`
+      `users/pro/${auth.currentUser.uid}/messages/${messageId}`
     );
     try {
       await remove(messageRef);
