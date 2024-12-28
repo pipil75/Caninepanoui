@@ -33,6 +33,8 @@ export const sendMessageToBothSides = async ({
       timestamp: new Date().toISOString(),
     };
 
+    console.log(messageData);
+
     const updates = {};
 
     if (isReply) {

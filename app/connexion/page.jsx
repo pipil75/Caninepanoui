@@ -9,7 +9,6 @@ import Image from "next/image";
 import Link from "next/link";
 import Typography from "@mui/material/Typography";
 import { ThemeProvider, createTheme } from "@mui/material/styles";
-// Import corrects depuis Material-UI
 
 import Card from "@mui/material/Card";
 import CardActions from "@mui/material/CardActions";
@@ -53,7 +52,7 @@ export default function MediaCard() {
       setLoading(false); // Arrêter le chargement après vérification
     });
 
-    return () => unsubscribe(); // Cleanup on component unmount
+    return () => unsubscribe();
   }, [router]);
 
   const handleSubmit = async (event) => {

@@ -1,5 +1,4 @@
 "use client";
-
 import { useRouter, useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { ref, get, push, set, update } from "firebase/database";
@@ -132,6 +131,8 @@ export default function UserDetailPage() {
         return;
       }
 
+      console.log(auth.currentUser);
+
       const messageData = {
         message: message.trim(),
         senderId: auth.currentUser.uid,
@@ -141,26 +142,72 @@ export default function UserDetailPage() {
         timestamp: new Date().toISOString(),
       };
 
-      console.log("Données du message :", messageData);
-
-      // Références Firebase
-      const recipientRef = ref(database, `users/pro/${user.uid}/messages`);
-      const senderRef = ref(
+      // Références Firebase pour les conversations
+      const userConversationsRef = ref(
         database,
-        `users/user/${auth.currentUser.uid}/messages`
+        `users/user/${auth.currentUser.uid}/conversations`
+      );
+      const recipientConversationsRef = ref(
+        database,
+        `users/pro/${user.uid}/conversations`
       );
 
-      // Générer une clé unique avec push()
-      const messageKey = push(recipientRef).key;
+      // Vérifier si une conversation existe déjà
+      const userConversationsSnapshot = await get(userConversationsRef);
+      let conversationId = null;
 
-      // Préparer les mises à jour avec des chemins relatifs valides
-      const updates = {};
-      updates[`users/pro/${user.uid}/messages/${messageKey}`] = messageData; // Chemin côté pro
-      updates[`users/user/${auth.currentUser.uid}/messages/${messageKey}`] =
-        messageData; // Chemin côté utilisateur
+      if (userConversationsSnapshot.exists()) {
+        const conversations = userConversationsSnapshot.val();
+        // Rechercher une conversation avec cet utilisateur
+        for (const key in conversations) {
+          if (conversations[key].recipientId === user.uid) {
+            conversationId = key;
+            break;
+          }
+        }
+      }
 
-      // Appliquer les mises à jour avec update()
-      await update(ref(database), updates);
+      if (conversationId) {
+        // Si la conversation existe, ajouter le message dans la conversation existante
+        const messageRef = ref(
+          database,
+          `users/user/${auth.currentUser.uid}/conversations/${conversationId}/messages`
+        );
+        const newMessageKey = push(messageRef).key;
+
+        const updates = {};
+        updates[
+          `users/user/${auth.currentUser.uid}/conversations/${conversationId}/messages/${newMessageKey}`
+        ] = messageData;
+        updates[
+          `users/pro/${user.uid}/conversations/${conversationId}/messages/${newMessageKey}`
+        ] = messageData;
+
+        await update(ref(database), updates);
+      } else {
+        // Si aucune conversation n'existe, créer une nouvelle conversation
+        conversationId = push(userConversationsRef).key;
+
+        const updates = {};
+        updates[
+          `users/user/${auth.currentUser.uid}/conversations/${conversationId}`
+        ] = {
+          recipientId: user.uid,
+          recipientName: user.displayName || "Professionnel",
+          messages: {
+            [push(ref(database)).key]: messageData,
+          },
+        };
+        updates[`users/pro/${user.uid}/conversations/${conversationId}`] = {
+          recipientId: auth.currentUser.uid,
+          recipientName: auth.currentUser.displayName || "Utilisateur",
+          messages: {
+            [push(ref(database)).key]: messageData,
+          },
+        };
+
+        await update(ref(database), updates);
+      }
 
       setConfirmationMessage("Message envoyé avec succès !");
       setMessage(""); // Réinitialisation du champ message

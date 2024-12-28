@@ -2,59 +2,81 @@
 import * as React from "react";
 import { useEffect, useState } from "react";
 import { ref, get } from "firebase/database";
-import { database, auth } from "../../lib/firebase";
 import {
-  Card,
-  CardContent,
-  Typography,
-  List,
-  ListItem,
-  ListItemText,
-} from "@mui/material";
+  getAuth,
+  onAuthStateChanged,
+  setPersistence,
+  browserLocalPersistence,
+} from "firebase/auth";
+import { database } from "../../lib/firebase";
+import { Card, CardContent, Typography, List, ListItem } from "@mui/material";
 import ResponsiveAppBar from "../navbar";
 import CookieAccepter from "../component/cookie/page";
+
 export default function ProfessionalAppointments() {
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [authLoading, setAuthLoading] = useState(true); // Pour l'état de l'authentification
+  const auth = getAuth();
 
   useEffect(() => {
-    const currentUser = auth.currentUser;
-    if (currentUser) {
-      const fetchAppointments = async () => {
-        try {
-          const professionalAppointmentsRef = ref(
-            database,
-            `users/${currentUser.uid}/appointments`
-          );
-          const snapshot = await get(professionalAppointmentsRef);
-          if (snapshot.exists()) {
-            const appointmentsData = snapshot.val();
-            const appointmentsList = Object.keys(appointmentsData).map(
-              (key) => ({
-                id: key,
-                ...appointmentsData[key],
-              })
-            );
-            setAppointments(appointmentsList);
+    // Configurer la persistance de session
+    setPersistence(auth, browserLocalPersistence)
+      .then(() => {
+        // Vérifier l'état de l'utilisateur
+        const unsubscribe = onAuthStateChanged(auth, (user) => {
+          if (user) {
+            // Si l'utilisateur est connecté, récupérer les rendez-vous
+            setAuthLoading(false);
+            const fetchAppointments = async () => {
+              try {
+                const professionalAppointmentsRef = ref(
+                  database,
+                  `users/${user.uid}/appointments`
+                );
+                const snapshot = await get(professionalAppointmentsRef);
+                if (snapshot.exists()) {
+                  const appointmentsData = snapshot.val();
+                  const appointmentsList = Object.keys(appointmentsData).map(
+                    (key) => ({
+                      id: key,
+                      ...appointmentsData[key],
+                    })
+                  );
+                  setAppointments(appointmentsList);
+                } else {
+                  setAppointments([]);
+                }
+              } catch (error) {
+                console.error(
+                  "Erreur lors de la récupération des rendez-vous :",
+                  error.message
+                );
+                setAppointments([]);
+              }
+              setLoading(false);
+            };
+            fetchAppointments();
           } else {
-            setAppointments([]);
+            // Si l'utilisateur n'est pas connecté
+            setAuthLoading(false);
+            setLoading(false);
           }
-        } catch (error) {
-          console.error(
-            "Erreur lors de la récupération des rendez-vous :",
-            error.message
-          );
-          setAppointments([]);
-        }
-        setLoading(false);
-      };
-      fetchAppointments();
-    } else {
-      setLoading(false);
-    }
-  }, []);
+        });
 
-  if (loading) {
+        return () => unsubscribe();
+      })
+      .catch((error) => {
+        console.error(
+          "Erreur lors de la configuration de la persistance :",
+          error.message
+        );
+        setAuthLoading(false);
+        setLoading(false);
+      });
+  }, [auth]);
+
+  if (authLoading || loading) {
     return <p>Chargement des données...</p>;
   }
 

@@ -15,7 +15,12 @@ import { ref, get } from "firebase/database";
 import { database } from "../../lib/firebase";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { getAuth, onAuthStateChanged } from "firebase/auth"; // Importer l'authentification Firebase
+import {
+  getAuth,
+  onAuthStateChanged,
+  setPersistence,
+  browserLocalPersistence,
+} from "firebase/auth"; // Importer l'authentification Firebase
 import CookieAccepter from "../component/cookie/page";
 import Header from "../header";
 export default function MultiActionAreaCard() {
@@ -27,17 +32,29 @@ export default function MultiActionAreaCard() {
 
   // Vérification de l'authentification de l'utilisateur
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (!user) {
-        // Si l'utilisateur n'est pas connecté, on le redirige vers la page 404
-        router.push("/");
-      } else {
-        // L'utilisateur est connecté, on peut charger les données
-        setAuthLoading(false); // L'authentification est vérifiée
-      }
-    });
+    // Configurer la persistance de session
+    setPersistence(auth, browserLocalPersistence)
+      .then(() => {
+        // Une fois la persistance configurée, surveiller l'état de l'utilisateur
+        const unsubscribe = onAuthStateChanged(auth, (user) => {
+          if (!user) {
+            // Si l'utilisateur n'est pas connecté, redirection vers la page d'accueil
+            router.push("/");
+          } else {
+            // L'utilisateur est connecté, arrêter le chargement de l'auth
+            setAuthLoading(false);
+          }
+        });
 
-    return () => unsubscribe(); // Nettoyage lors du démontage du composant
+        return () => unsubscribe(); // Nettoyer lors du démontage
+      })
+      .catch((error) => {
+        console.error(
+          "Erreur lors de la configuration de la persistance :",
+          error
+        );
+        // Optionnel : gérer l'erreur ici, par exemple, afficher un message à l'utilisateur
+      });
   }, [auth, router]);
 
   // Fonction pour récupérer les utilisateurs depuis Firebase
