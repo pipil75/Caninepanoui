@@ -82,7 +82,7 @@ export default function ProMessages() {
     const messageData = {
       message: reply[conversationId].trim(),
       senderId: auth.currentUser.uid,
-      senderName: auth.currentUser.senderName || "Professionnel",
+      senderName: user.name,
       timestamp: new Date().toISOString(),
     };
 
