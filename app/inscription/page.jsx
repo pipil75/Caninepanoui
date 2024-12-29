@@ -217,7 +217,7 @@ const MediaInscription = () => {
                   value={displayName}
                   required
                   fullWidth
-                  id="name"
+                  id="displayName"
                   label="Nom"
                   name="nom"
                   autoComplete="name"
