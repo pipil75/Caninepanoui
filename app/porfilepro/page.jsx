@@ -80,10 +80,6 @@ export default function ProfessionalAppointments() {
     return <p>Chargement des données...</p>;
   }
 
-  if (appointments.length === 0) {
-    return <p>Aucun rendez-vous trouvé.</p>;
-  }
-
   return (
     <div>
       <ResponsiveAppBar />
