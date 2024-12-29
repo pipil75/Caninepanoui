@@ -110,7 +110,7 @@ const MediaInscription = () => {
         codepostal: codepostal,
         email: email,
         image: imageUrl,
-        name: displayName,
+        displayName: displayName,
         role: role,
         siret: role === "pro" ? siret : "",
         uid: userCredential.user.uid,
@@ -214,7 +214,7 @@ const MediaInscription = () => {
             >
               <div>
                 <TextField
-                  value={name}
+                  value={displayName}
                   required
                   fullWidth
                   id="name"
