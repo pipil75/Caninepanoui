@@ -52,7 +52,7 @@ const MediaInscription = () => {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState(null);
-  const [name, setName] = useState("");
+  const [displayName, setName] = useState("");
   const [role, setRole] = useState("user");
   const [siret, setSiret] = useState("");
   const [image, setImage] = useState("");
