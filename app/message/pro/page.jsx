@@ -175,7 +175,7 @@ export default function ProMessages() {
                         }}
                       >
                         <Typography variant="body2">
-                          <strong>De :</strong> {msg.senderEmail}
+                          <strong>De :</strong> {msg.senderName}
                         </Typography>
                         <Typography variant="body2">
                           <strong>Message :</strong> {msg.message}
