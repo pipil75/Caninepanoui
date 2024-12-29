@@ -110,7 +110,7 @@ const MediaInscription = () => {
         codepostal: codepostal,
         email: email,
         image: imageUrl,
-        name: name,
+        name: displayName,
         role: role,
         siret: role === "pro" ? siret : "",
         uid: userCredential.user.uid,
