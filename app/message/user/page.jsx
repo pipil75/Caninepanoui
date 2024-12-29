@@ -91,7 +91,7 @@ export default function UserMessages() {
     const messageData = {
       message: reply[conversationId].trim(),
       senderId: auth.currentUser.uid,
-      senderName: auth.currentUser.senderEmail || "Utilisateur",
+      senderName: user.name,
       timestamp: new Date().toISOString(),
     };
 
