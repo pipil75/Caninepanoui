@@ -26,6 +26,7 @@ export default function ProMessages() {
   const [reply, setReply] = useState({}); // Réponses par conversation ID
   // Vérification de l'authentification de l'utilisateur
   const [authLoading, setAuthLoading] = useState(true);
+
   useEffect(() => {
     // Configurer la persistance de session
     setPersistence(auth, browserLocalPersistence)
@@ -50,8 +51,6 @@ export default function ProMessages() {
         );
         // Optionnel : gérer l'erreur ici, par exemple, afficher un message à l'utilisateur
       });
-  });
-  useEffect(() => {
     const fetchConversations = async () => {
       const currentUser = auth.currentUser;
 
