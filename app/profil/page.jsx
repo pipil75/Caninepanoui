@@ -37,7 +37,7 @@ export default function Cardprofil() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [confirmationMessage, setConfirmationMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
-
+  const [prix, setPrix] = useState("");
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
@@ -91,6 +91,7 @@ export default function Cardprofil() {
         email,
         description,
         experience: role === "pro" ? experience : "",
+        prix: role === "pro" && prix,
       });
 
       if (password) {
@@ -179,6 +180,17 @@ export default function Cardprofil() {
                     variant="standard"
                     value={experience}
                     onChange={(e) => setExperience(e.target.value)}
+                  />
+                )}
+                {role === "pro" && (
+                  <TextField
+                    fullWidth
+                    id="prix"
+                    label="Prix prestation"
+                    autoComplete=" prix prestation"
+                    variant="standard"
+                    value={prix}
+                    onChange={(e) => setPrix(e.target.value)}
                   />
                 )}
 
