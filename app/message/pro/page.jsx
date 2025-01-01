@@ -15,12 +15,41 @@ import {
 import { Delete, Reply } from "@mui/icons-material";
 import ResponsiveAppBar from "../../navbar";
 import Header from "../../header";
-
+import {
+  onAuthStateChanged,
+  setPersistence,
+  browserLocalPersistence,
+} from "firebase/auth";
 export default function ProMessages() {
   const [conversations, setConversations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [reply, setReply] = useState({}); // Réponses par conversation ID
+  // Vérification de l'authentification de l'utilisateur
+  useEffect(() => {
+    // Configurer la persistance de session
+    setPersistence(auth, browserLocalPersistence)
+      .then(() => {
+        // Une fois la persistance configurée, surveiller l'état de l'utilisateur
+        const unsubscribe = onAuthStateChanged(auth, (user) => {
+          if (!user) {
+            // Si l'utilisateur n'est pas connecté, redirection vers la page d'accueil
+            router.push("/");
+          } else {
+            // L'utilisateur est connecté, arrêter le chargement de l'auth
+            setAuthLoading(false);
+          }
+        });
 
+        return () => unsubscribe(); // Nettoyer lors du démontage
+      })
+      .catch((error) => {
+        console.error(
+          "Erreur lors de la configuration de la persistance :",
+          error
+        );
+        // Optionnel : gérer l'erreur ici, par exemple, afficher un message à l'utilisateur
+      });
+  }, [auth, router]);
   useEffect(() => {
     const fetchConversations = async () => {
       const currentUser = auth.currentUser;
