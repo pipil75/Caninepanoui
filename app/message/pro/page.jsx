@@ -25,6 +25,7 @@ export default function ProMessages() {
   const [loading, setLoading] = useState(true);
   const [reply, setReply] = useState({}); // Réponses par conversation ID
   // Vérification de l'authentification de l'utilisateur
+  const [authLoading, setAuthLoading] = useState(true);
   useEffect(() => {
     // Configurer la persistance de session
     setPersistence(auth, browserLocalPersistence)
