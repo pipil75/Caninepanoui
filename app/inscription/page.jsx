@@ -14,6 +14,7 @@ import {
   getAuth,
   createUserWithEmailAndPassword,
   sendEmailVerification,
+  updateProfile,
 } from "firebase/auth";
 import { ref, set } from "firebase/database";
 import { auth, database, storage } from "../../lib/firebase";
@@ -52,7 +53,7 @@ const MediaInscription = () => {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState(null);
-  const [displayName, setName] = useState("");
+  const [name, setName] = useState("");
   const [role, setRole] = useState("user");
   const [siret, setSiret] = useState("");
   const [image, setImage] = useState("");
@@ -92,6 +93,12 @@ const MediaInscription = () => {
         password
       );
 
+      const user = userCredential.user;
+
+      await updateProfile(user, {
+        displayName: name,
+      });
+
       // Téléchargement de l'image si elle existe
       let imageUrl = "";
       if (image) {
@@ -110,7 +117,7 @@ const MediaInscription = () => {
         codepostal: codepostal,
         email: email,
         image: imageUrl,
-        displayName: displayName,
+        name: name,
         role: role,
         siret: role === "pro" ? siret : "",
         uid: userCredential.user.uid,
@@ -214,7 +221,7 @@ const MediaInscription = () => {
             >
               <div>
                 <TextField
-                  value={displayName}
+                  value={name}
                   required
                   fullWidth
                   id="displayName"
@@ -251,7 +258,7 @@ const MediaInscription = () => {
                   required
                   fullWidth
                   id="email"
-                  label=" entré une Adresse e-mail paypal pro pour les proffesionel "
+                  label=" entré une Adresse e-mail paypal pro pour les professionels "
                   name="email"
                   autoComplete="email"
                   variant="standard"

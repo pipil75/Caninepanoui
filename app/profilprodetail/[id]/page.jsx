@@ -131,8 +131,6 @@ export default function UserDetailPage() {
         return;
       }
 
-      console.log(auth.currentUser);
-
       const messageData = {
         message: message.trim(),
         senderId: auth.currentUser.uid,
@@ -359,7 +357,7 @@ export default function UserDetailPage() {
             <DialogTitle>Paiement avec PayPal</DialogTitle>
             <DialogContent>
               <DialogContentText>
-                Effectuez un paiement de 10€ pour réserver ce professionnel.
+                Effectuez un paiement pour réserver ce professionnel.
               </DialogContentText>
 
               <PayPalScriptProvider options={initialOptions}>
