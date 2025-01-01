@@ -49,7 +49,7 @@ export default function ProMessages() {
         );
         // Optionnel : gérer l'erreur ici, par exemple, afficher un message à l'utilisateur
       });
-  }, [auth, router]);
+  });
   useEffect(() => {
     const fetchConversations = async () => {
       const currentUser = auth.currentUser;
