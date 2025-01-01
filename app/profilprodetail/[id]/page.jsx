@@ -285,6 +285,9 @@ export default function UserDetailPage() {
               <Typography variant="body1" color="text.secondary">
                 <strong>Experience:</strong> {user.experience || "Non fourni"}
               </Typography>
+              <Typography variant="body1" color="text.secondary">
+                <strong>Prix:</strong> {user.prix || "Non fourni"}
+              </Typography>
             </CardContent>
           </div>
           <Stack
