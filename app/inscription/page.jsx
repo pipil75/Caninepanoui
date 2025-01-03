@@ -25,6 +25,7 @@ import {
   getDownloadURL,
 } from "firebase/storage";
 import styles from "../connexion/Connexion.module.css";
+import { useRouter } from "next/router";
 const theme = createTheme({
   palette: {
     primary: {
@@ -63,7 +64,7 @@ const MediaInscription = () => {
   const [adresse, setAdressse] = useState("");
   const [codepostal, setCodepostal] = useState("");
   const auth = getAuth();
-
+  const router = useRouter();
   const handleRegister = async (e) => {
     e.preventDefault();
 
@@ -140,6 +141,8 @@ const MediaInscription = () => {
       setError(null);
       setAdressse("");
       setCodepostal("");
+
+      router.push("/connexion");
     } catch (error) {
       // Gestion des erreurs Firebase
       switch (error.code) {
