@@ -141,6 +141,7 @@ const MediaInscription = () => {
       setError(null);
       setAdressse("");
       setCodepostal("");
+      console.log("Redirection vers /connexion");
       router.push("/connexion");
     } catch (error) {
       // Gestion des erreurs Firebase
