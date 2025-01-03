@@ -141,7 +141,6 @@ const MediaInscription = () => {
       setError(null);
       setAdressse("");
       setCodepostal("");
-
       router.push("/connexion");
     } catch (error) {
       // Gestion des erreurs Firebase
@@ -189,160 +188,164 @@ const MediaInscription = () => {
   };
 
   return (
-    <ThemeProvider theme={theme}>
-      <div className={styles.container}>
-        <Image
-          component="img"
-          alt="logo chien"
-          width={300}
-          height={300}
-          src="/images/blob.png"
-        />
-        <Card sx={{ maxWidth: 600, backgroundColor: "primary.main" }}>
-          <CardContent>
-            <Typography
-              variant="h3"
-              sx={{ color: theme.palette.secondary.main }}
-            >
-              Inscription
-            </Typography>
-            {error && (
-              <Typography sx={{ color: "error.main" }}>{error}</Typography>
-            )}
-            {confirmationMessage && (
-              <Typography sx={{ color: "success.main" }}>
-                {confirmationMessage}
-              </Typography>
-            )}
-          </CardContent>
-          <CardActions>
-            <Box
-              component="form"
-              onSubmit={handleRegister}
-              noValidate
-              sx={{ mt: 1 }}
-            >
-              <div>
-                <TextField
-                  value={name}
-                  required
-                  fullWidth
-                  id="displayName"
-                  label="Nom"
-                  name="nom"
-                  autoComplete="name"
-                  variant="standard"
-                  onChange={(e) => setName(e.target.value)}
-                />
-                <TextField
-                  value={adresse}
-                  required
-                  fullWidth
-                  id="adresse"
-                  label="Adresse"
-                  name="adresse"
-                  autoComplete="adresse"
-                  variant="standard"
-                  onChange={(e) => setAdressse(e.target.value)}
-                />
-                <TextField
-                  value={codepostal}
-                  required
-                  fullWidth
-                  id="codepostal"
-                  label="Codepostal"
-                  name="codepostal"
-                  autoComplete="codepostal"
-                  variant="standard"
-                  onChange={(e) => setCodepostal(e.target.value)}
-                />
-                <TextField
-                  value={email}
-                  required
-                  fullWidth
-                  id="email"
-                  label=" entré une Adresse e-mail paypal pro pour les professionels "
-                  name="email"
-                  autoComplete="email"
-                  variant="standard"
-                  onChange={(e) => {
-                    setEmail(e.target.value);
-                    if (!emailRegex.test(e.target.value)) {
-                      setError("Adresse e-mail invalide.");
-                    } else {
-                      setError(null);
-                    }
-                  }}
-                />
-                <TextField
-                  value={password}
-                  required
-                  fullWidth
-                  id="password"
-                  label="Mot de passe"
-                  name="password"
-                  type="password"
-                  autoComplete="current-password"
-                  variant="standard"
-                  onChange={(e) => setPassword(e.target.value)}
-                />
-                <TextField
-                  value={confirmPassword}
-                  required
-                  fullWidth
-                  id="confirmPassword"
-                  label="Confirmez le mot de passe"
-                  name="confirmPassword"
-                  type="password"
-                  autoComplete="current-password"
-                  variant="standard"
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                />
-                <Select
-                  value={role}
-                  onChange={(e) => setRole(e.target.value)}
-                  variant="standard"
-                  fullWidth
-                  sx={{ mt: 2 }}
+    <div>
+      <form onSubmit={handleRegister}>
+        <ThemeProvider theme={theme}>
+          <div className={styles.container}>
+            <Image
+              component="img"
+              alt="logo chien"
+              width={300}
+              height={300}
+              src="/images/blob.png"
+            />
+            <Card sx={{ maxWidth: 600, backgroundColor: "primary.main" }}>
+              <CardContent>
+                <Typography
+                  variant="h3"
+                  sx={{ color: theme.palette.secondary.main }}
                 >
-                  <MenuItem value="user">Utilisateur</MenuItem>
-                  <MenuItem value="pro">Professionnel</MenuItem>
-                </Select>
-                {role === "pro" && (
-                  <TextField
-                    value={siret}
-                    required
-                    fullWidth
-                    id="siret"
-                    label="Numéro SIRET"
-                    name="siret"
-                    autoComplete="siret"
-                    variant="standard"
-                    onChange={(e) => setSiret(e.target.value)}
-                    sx={{ mt: 2 }}
-                  />
+                  Inscription
+                </Typography>
+                {error && (
+                  <Typography sx={{ color: "error.main" }}>{error}</Typography>
                 )}
-                <input
-                  type="file"
-                  accept="image/jpeg, image/png, image/webp" // Restreint les types de fichiers
-                  onChange={handleImageChange}
-                />
-                ;
-                <Button
-                  type="submit"
-                  fullWidth
-                  variant="contained"
-                  disabled={isLoading}
-                  sx={{ mt: 2, mb: 1, backgroundColor: "secondary.main" }}
+                {confirmationMessage && (
+                  <Typography sx={{ color: "success.main" }}>
+                    {confirmationMessage}
+                  </Typography>
+                )}
+              </CardContent>
+              <CardActions>
+                <Box
+                  component="form"
+                  onSubmit={handleRegister}
+                  noValidate
+                  sx={{ mt: 1 }}
                 >
-                  {isLoading ? "Chargement..." : "S'inscrire"}
-                </Button>
-              </div>
-            </Box>
-          </CardActions>
-        </Card>
-      </div>
-    </ThemeProvider>
+                  <div>
+                    <TextField
+                      value={name}
+                      required
+                      fullWidth
+                      id="displayName"
+                      label="Nom"
+                      name="nom"
+                      autoComplete="name"
+                      variant="standard"
+                      onChange={(e) => setName(e.target.value)}
+                    />
+                    <TextField
+                      value={adresse}
+                      required
+                      fullWidth
+                      id="adresse"
+                      label="Adresse"
+                      name="adresse"
+                      autoComplete="adresse"
+                      variant="standard"
+                      onChange={(e) => setAdressse(e.target.value)}
+                    />
+                    <TextField
+                      value={codepostal}
+                      required
+                      fullWidth
+                      id="codepostal"
+                      label="Codepostal"
+                      name="codepostal"
+                      autoComplete="codepostal"
+                      variant="standard"
+                      onChange={(e) => setCodepostal(e.target.value)}
+                    />
+                    <TextField
+                      value={email}
+                      required
+                      fullWidth
+                      id="email"
+                      label=" entré une Adresse e-mail paypal pro pour les professionels "
+                      name="email"
+                      autoComplete="email"
+                      variant="standard"
+                      onChange={(e) => {
+                        setEmail(e.target.value);
+                        if (!emailRegex.test(e.target.value)) {
+                          setError("Adresse e-mail invalide.");
+                        } else {
+                          setError(null);
+                        }
+                      }}
+                    />
+                    <TextField
+                      value={password}
+                      required
+                      fullWidth
+                      id="password"
+                      label="Mot de passe"
+                      name="password"
+                      type="password"
+                      autoComplete="current-password"
+                      variant="standard"
+                      onChange={(e) => setPassword(e.target.value)}
+                    />
+                    <TextField
+                      value={confirmPassword}
+                      required
+                      fullWidth
+                      id="confirmPassword"
+                      label="Confirmez le mot de passe"
+                      name="confirmPassword"
+                      type="password"
+                      autoComplete="current-password"
+                      variant="standard"
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                    />
+                    <Select
+                      value={role}
+                      onChange={(e) => setRole(e.target.value)}
+                      variant="standard"
+                      fullWidth
+                      sx={{ mt: 2 }}
+                    >
+                      <MenuItem value="user">Utilisateur</MenuItem>
+                      <MenuItem value="pro">Professionnel</MenuItem>
+                    </Select>
+                    {role === "pro" && (
+                      <TextField
+                        value={siret}
+                        required
+                        fullWidth
+                        id="siret"
+                        label="Numéro SIRET"
+                        name="siret"
+                        autoComplete="siret"
+                        variant="standard"
+                        onChange={(e) => setSiret(e.target.value)}
+                        sx={{ mt: 2 }}
+                      />
+                    )}
+                    <input
+                      type="file"
+                      accept="image/jpeg, image/png, image/webp" // Restreint les types de fichiers
+                      onChange={handleImageChange}
+                    />
+                    ;
+                    <Button
+                      type="submit"
+                      fullWidth
+                      variant="contained"
+                      disabled={isLoading}
+                      sx={{ mt: 2, mb: 1, backgroundColor: "secondary.main" }}
+                    >
+                      {isLoading ? "Chargement..." : "S'inscrire"}
+                    </Button>
+                  </div>
+                </Box>
+              </CardActions>
+            </Card>
+          </div>
+        </ThemeProvider>
+      </form>
+    </div>
   );
 };
 
