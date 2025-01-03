@@ -25,7 +25,7 @@ import {
   getDownloadURL,
 } from "firebase/storage";
 import styles from "../connexion/Connexion.module.css";
-import { useRouter } from "next/router";
+import { useRouter } from "next/navigation";
 const theme = createTheme({
   palette: {
     primary: {
