@@ -78,12 +78,20 @@ function ResponsiveAppBar() {
   };
 
   const menuItems = [
-    { label: "Accueil", path: "/", visible: true },
+    { label: "Accueil", path: "/accueil", visible: true },
     { label: "Mon profil", path: "/profil", visible: true },
     { label: "Messages", path: "/message", visible: !!role },
     { label: "Déconnexion", path: null, visible: true, action: handleLogout },
+    { label: "ProfilPro", path: "/porfilepro", visible: role === "pro" },
   ];
-
+  // Gérer la redirection de l'avatar en fonction du rôle
+  const handleAvatarClick = () => {
+    if (role === "pro") {
+      router.push("/porfilepro"); // Redirection vers ProfilPro pour un professionnel
+    } else {
+      router.push("/accueil"); // Redirection vers Accueil pour un utilisateur normal
+    }
+  };
   return (
     <ThemeProvider theme={theme}>
       <AppBar position="static">
@@ -91,7 +99,7 @@ function ResponsiveAppBar() {
           <Toolbar disableGutters>
             {/* Logo cliquable pour revenir à l'accueil */}
             <Box
-              onClick={() => handleNavigate("/")}
+              onClick={handleAvatarClick}
               sx={{
                 display: "flex",
                 alignItems: "center",
