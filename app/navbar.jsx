@@ -78,11 +78,11 @@ function ResponsiveAppBar() {
   };
 
   const menuItems = [
-    { label: "Accueil", path: "/accueil", visible: true },
+    { label: "Accueil", path: "/accueil", visible: role === "user" },
     { label: "Mon profil", path: "/profil", visible: true },
     { label: "Messages", path: "/message", visible: !!role },
     { label: "Déconnexion", path: null, visible: true, action: handleLogout },
-    { label: "ProfilPro", path: "/porfilepro", visible: role === "pro" },
+    { label: "Accueil", path: "/porfilepro", visible: role === "pro" },
   ];
   // Gérer la redirection de l'avatar en fonction du rôle
   const handleAvatarClick = () => {
