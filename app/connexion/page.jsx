@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useRouter } from "next/navigation";
-import { signInWithEmailAndPassword, onAuthStateChanged } from "firebase/auth";
+import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth, database } from "../../lib/firebase";
 import { ref, get } from "firebase/database";
 import Image from "next/image";
@@ -17,6 +17,7 @@ import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import TextField from "@mui/material/TextField";
 import styles from "../connexion/Connexion.module.css";
+
 const theme = createTheme({
   palette: {
     primary: { main: "#FCFEF7" },
@@ -30,30 +31,7 @@ export default function MediaCard() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState(null);
-  const [loading, setLoading] = useState(true);
-
-  // Vérification si l'utilisateur est déjà connecté
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      if (user) {
-        const userId = user.uid;
-
-        // Récupération du rôle de l'utilisateur connecté
-        const userRoleRef = ref(database, `users/${userId}/role`);
-        const snapshot = await get(userRoleRef);
-
-        if (snapshot.exists()) {
-          const role = snapshot.val();
-          router.push(role === "pro" ? "/porfilepro" : "/accueil");
-        } else {
-          setError("Rôle de l'utilisateur introuvable.");
-        }
-      }
-      setLoading(false); // Arrêter le chargement après vérification
-    });
-
-    return () => unsubscribe();
-  }, [router]);
+  const [loading, setLoading] = useState(false); // Par défaut, pas en chargement
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -82,17 +60,12 @@ export default function MediaCard() {
       setError("Erreur d'authentification. Vérifiez vos identifiants.");
       console.error(error);
     } finally {
+      // Réinitialiser les champs après la tentative de connexion
+      setEmail("");
+      setPassword("");
       setLoading(false);
     }
   };
-
-  if (loading) {
-    return (
-      <div style={{ textAlign: "center", marginTop: "50px" }}>
-        <Typography variant="h5">Chargement...</Typography>
-      </div>
-    );
-  }
 
   return (
     <ThemeProvider theme={theme}>
@@ -126,7 +99,7 @@ export default function MediaCard() {
                 name="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                autoComplete="email"
+                autoComplete="off" // Désactiver l'autocomplétion
                 variant="standard"
                 margin="normal"
               />
@@ -139,7 +112,7 @@ export default function MediaCard() {
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                autoComplete="current-password"
+                autoComplete="off" // Désactiver l'autocomplétion
                 variant="standard"
                 margin="normal"
               />
