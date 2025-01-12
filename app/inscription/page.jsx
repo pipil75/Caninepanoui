@@ -250,9 +250,9 @@ const MediaInscription = () => {
                   required
                   fullWidth
                   id="codepostal"
-                  label="Codepostal"
-                  name="codepostal"
-                  autoComplete="codepostal"
+                  label="Code postal"
+                  name="code postal"
+                  autoComplete="code postal"
                   variant="standard"
                   onChange={(e) => setCodepostal(e.target.value)}
                 />
@@ -261,7 +261,7 @@ const MediaInscription = () => {
                   required
                   fullWidth
                   id="email"
-                  label=" entré une Adresse e-mail paypal pro pour les professionels "
+                  label=" entrée une Adresse e-mail paypal pro pour les professionels "
                   name="email"
                   autoComplete="email"
                   variant="standard"
