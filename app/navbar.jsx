@@ -11,6 +11,7 @@ import Avatar from "@mui/material/Avatar";
 import Button from "@mui/material/Button";
 import MenuItem from "@mui/material/MenuItem";
 import { ref, get } from "firebase/database";
+import { getAuth, deleteUser } from "firebase/auth";
 import { auth, database } from "../lib/firebase";
 import { useRouter } from "next/navigation";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
@@ -18,18 +19,11 @@ import useMediaQuery from "@mui/material/useMediaQuery";
 
 const theme = createTheme({
   palette: {
-    primary: {
-      main: "#847774", // Fond de la barre de navigation
-    },
-    secondary: {
-      main: "#FCFEF7", // Couleur des liens pour un bon contraste
-    },
+    primary: { main: "#847774" },
+    secondary: { main: "#FCFEF7" },
   },
   typography: {
-    h3: {
-      fontSize: "2.5rem",
-      fontWeight: "bold",
-    },
+    h3: { fontSize: "2.5rem", fontWeight: "bold" },
   },
 });
 
@@ -39,22 +33,19 @@ function ResponsiveAppBar() {
   const [role, setRole] = React.useState(null);
   const router = useRouter();
   const isMobile = useMediaQuery("(max-width:600px)");
+  const authInstance = getAuth();
 
   React.useEffect(() => {
     const userId = auth.currentUser?.uid;
     if (userId) {
       const imageRef = ref(database, `users/${userId}/image`);
       get(imageRef).then((snapshot) => {
-        if (snapshot.exists()) {
-          setImages(snapshot.val());
-        }
+        if (snapshot.exists()) setImages(snapshot.val());
       });
 
       const roleRef = ref(database, `users/${userId}/role`);
       get(roleRef).then((snapshot) => {
-        if (snapshot.exists()) {
-          setRole(snapshot.val());
-        }
+        if (snapshot.exists()) setRole(snapshot.val());
       });
     }
   }, []);
@@ -77,34 +68,53 @@ function ResponsiveAppBar() {
     router.push("/connexion");
   };
 
+  const handleDeleteAccount = async () => {
+    const user = authInstance.currentUser;
+    if (!user) return alert("Aucun utilisateur connecté");
+
+    const confirmDelete = window.confirm(
+      "Êtes-vous sûr de vouloir supprimer votre compte ? Cette action est irréversible."
+    );
+    if (!confirmDelete) return;
+
+    try {
+      await deleteUser(user);
+      alert("Compte supprimé avec succès !");
+      router.push("/connexion");
+    } catch (error) {
+      console.error("Erreur lors de la suppression :", error);
+      alert("Erreur lors de la suppression du compte. Réessayez.");
+    }
+  };
+
   const menuItems = [
     { label: "Accueil", path: "/accueil", visible: role === "user" },
     { label: "Mon profil", path: "/profil", visible: true },
     { label: "Messages", path: "/message", visible: !!role },
     { label: "Déconnexion", path: null, visible: true, action: handleLogout },
+    {
+      label: "Supprimer mon compte",
+      path: null,
+      visible: true,
+      action: handleDeleteAccount,
+    },
     { label: "Accueil", path: "/porfilepro", visible: role === "pro" },
+    { label: "Mes rendez-vous", path: "/rdvuser", visible: role === "user" },
   ];
-  // Gérer la redirection de l'avatar en fonction du rôle
-  const handleAvatarClick = () => {
-    if (role === "pro") {
-      router.push("/porfilepro"); // Redirection vers ProfilPro pour un professionnel
-    } else {
-      router.push("/accueil"); // Redirection vers Accueil pour un utilisateur normal
-    }
+
+  const handleProfileClick = () => {
+    router.push(role === "pro" ? "/porfilepro" : "/accueil");
   };
+
   return (
     <ThemeProvider theme={theme}>
       <AppBar position="static">
         <Container maxWidth="xl">
           <Toolbar disableGutters>
-            {/* Logo cliquable pour revenir à l'accueil */}
+            {/* Logo */}
             <Box
-              onClick={handleAvatarClick}
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                cursor: "pointer",
-              }}
+              onClick={handleProfileClick}
+              sx={{ display: "flex", alignItems: "center", cursor: "pointer" }}
             >
               <Image
                 alt="logo chien"
@@ -134,9 +144,7 @@ function ResponsiveAppBar() {
                         my: 2,
                         color: theme.palette.secondary.main,
                         backgroundColor: theme.palette.primary.main,
-                        "&:hover": {
-                          backgroundColor: "#6c635e", // Couleur au survol
-                        },
+                        "&:hover": { backgroundColor: "#6c635e" },
                         marginLeft: 2,
                         borderRadius: "8px",
                       }}
@@ -147,7 +155,7 @@ function ResponsiveAppBar() {
               )}
             </Box>
 
-            {/* Mobile Navigation - Menu Burger */}
+            {/* Mobile Navigation */}
             <Box sx={{ flexGrow: 1, display: { xs: "flex", md: "none" } }}>
               <IconButton
                 size="large"
@@ -164,15 +172,9 @@ function ResponsiveAppBar() {
               <Menu
                 id="menu-appbar"
                 anchorEl={anchorElNav}
-                anchorOrigin={{
-                  vertical: "top",
-                  horizontal: "left",
-                }}
+                anchorOrigin={{ vertical: "top", horizontal: "left" }}
                 keepMounted
-                transformOrigin={{
-                  vertical: "top",
-                  horizontal: "left",
-                }}
+                transformOrigin={{ vertical: "top", horizontal: "left" }}
                 open={Boolean(anchorElNav)}
                 onClose={handleCloseNavMenu}
               >
@@ -194,13 +196,10 @@ function ResponsiveAppBar() {
               </Menu>
             </Box>
 
-            {/* Avatar redirige directement vers l'accueil */}
+            {/* Avatar */}
             <Box
-              sx={{
-                flexGrow: 0,
-                cursor: "pointer",
-              }}
-              onClick={() => handleNavigate("/")}
+              onClick={handleProfileClick}
+              sx={{ flexGrow: 0, cursor: "pointer" }}
             >
               <Avatar
                 sx={{

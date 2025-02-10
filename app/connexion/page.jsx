@@ -69,6 +69,24 @@ export default function MediaCard() {
 
   return (
     <ThemeProvider theme={theme}>
+      <Typography
+        variant="h5 small"
+        align="center"
+        sx={{
+          color: "#6F6561", // Texte en blanc pour le contraste
+          fontFamily: "arial",
+          marginTop: 30,
+          fontSize: "10px",
+        }}
+      >
+        <h1>
+          Vous êtes propriétaire d'un chien à la recherche d'un éducateur canin
+          compétent ?<br /> Ou êtes-vous un éducateur canin souhaitant offrir
+          vos services ? <br /> Ne cherchez plus !<br /> Notre plateforme est
+          conçue pour mettre en relation les propriétaires de chiens avec des
+          professionnels qualifiés.
+        </h1>
+      </Typography>
       <div className={styles.container}>
         <Image
           alt="logo chien"
@@ -76,12 +94,13 @@ export default function MediaCard() {
           height={300}
           src="/images/blob.png"
         />
+
         <Card
           sx={{ maxWidth: 600, backgroundColor: theme.palette.primary.main }}
         >
           <CardContent>
             <Typography sx={{ color: theme.palette.secondary.main }}>
-              <h1>Connectez-vous</h1>
+              <h2>Connectez-vous</h2>
             </Typography>
           </CardContent>
           <CardActions>

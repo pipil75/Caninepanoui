@@ -29,6 +29,7 @@ export default function UserDetailPage() {
   const params = useParams();
   const { id } = params; // Récupérer l'ID depuis l'URL
   const [user, setUser] = useState(null);
+  const [professional, setProfessional] = useState(null);
   const [loading, setLoading] = useState(true);
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
@@ -53,6 +54,7 @@ export default function UserDetailPage() {
     if (id) {
       const fetchUserDetail = async () => {
         try {
+          // Récupérer les informations de l'utilisateur (le professionnel)
           const userRef = ref(database, `users/${id}`);
           const snapshot = await get(userRef);
           if (snapshot.exists()) {
@@ -60,12 +62,19 @@ export default function UserDetailPage() {
           } else {
             setUser(null); // Si aucune donnée trouvée
           }
+
+          // Récupérer les informations du professionnel
+          const professionalRef = ref(database, `users/${id}`);
+          const professionalSnapshot = await get(professionalRef);
+          if (professionalSnapshot.exists()) {
+            setProfessional(professionalSnapshot.val());
+          } else {
+            setProfessional(null); // Si aucune donnée trouvée
+          }
         } catch (error) {
-          console.error(
-            "Erreur lors de la récupération des détails de l'utilisateur:",
-            error
-          );
+          console.error("Erreur lors de la récupération des détails:", error);
           setUser(null);
+          setProfessional(null);
         }
         setLoading(false);
       };
@@ -87,14 +96,49 @@ export default function UserDetailPage() {
         setConfirmationMessage("Veuillez fournir une date et une heure.");
         return;
       }
+      // Référence aux rendez-vous existants de l'utilisateur
+      const userAppointmentsRef = ref(
+        database,
+        `users/${currentUser.uid}/appointments`
+      );
+
+      // Récupération des rendez-vous existants
+      const userAppointmentsSnapshot = await get(userAppointmentsRef);
+
+      // Vérifie si des rendez-vous existent
+      if (userAppointmentsSnapshot.exists()) {
+        const existingAppointments = userAppointmentsSnapshot.val();
+
+        // Debugging pour vérifier les données
+        console.log("Rendez-vous existants :", existingAppointments);
+
+        const isConflict = Object.values(existingAppointments).some(
+          (appointment) =>
+            appointment.date === date && appointment.time === time
+        );
+
+        if (isConflict) {
+          setConfirmationMessage(
+            <span style={{ color: "red" }}>
+              Un rendez-vous existe déjà à cette date et heure.
+            </span>
+          );
+          return;
+        }
+      } else {
+        console.log("Aucun rendez-vous existant trouvé pour cet utilisateur.");
+      }
 
       const appointmentData = {
         date: date,
         time: time,
         professionalId: id,
+
         userId: currentUser.uid,
         userName: currentUser.displayName || "Utilisateur Anonyme",
         userEmail: currentUser.email,
+        proName: professional?.name || "Professionnel Anonyme", // Utilisez le nom du professionnel
+        proEmail: user && user.email ? user.email : "",
       };
 
       // Enregistrer le rendez-vous sous l'utilisateur
