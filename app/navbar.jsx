@@ -10,13 +10,20 @@ import Container from "@mui/material/Container";
 import Avatar from "@mui/material/Avatar";
 import Button from "@mui/material/Button";
 import MenuItem from "@mui/material/MenuItem";
-import { ref, get } from "firebase/database";
-import { getAuth, deleteUser } from "firebase/auth";
+import { get } from "firebase/database";
 import { auth, database } from "../lib/firebase";
+import { getDatabase, ref, remove } from "firebase/database";
 import { useRouter } from "next/navigation";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import useMediaQuery from "@mui/material/useMediaQuery";
-
+import { useState } from "react";
+import {
+  getAuth,
+  deleteUser,
+  signOut,
+  reauthenticateWithCredential,
+  EmailAuthProvider,
+} from "firebase/auth";
 const theme = createTheme({
   palette: {
     primary: { main: "#847774" },
@@ -34,7 +41,7 @@ function ResponsiveAppBar() {
   const router = useRouter();
   const isMobile = useMediaQuery("(max-width:600px)");
   const authInstance = getAuth();
-
+  const [loading, setLoading] = useState(false);
   React.useEffect(() => {
     const userId = auth.currentUser?.uid;
     if (userId) {
@@ -66,24 +73,52 @@ function ResponsiveAppBar() {
   const handleLogout = () => {
     auth.signOut();
     router.push("/connexion");
-  };
-
+  }; // Assure-toi d'importer le router
   const handleDeleteAccount = async () => {
-    const user = authInstance.currentUser;
-    if (!user) return alert("Aucun utilisateur connecté");
+    const auth = getAuth();
+    const user = auth.currentUser;
 
-    const confirmDelete = window.confirm(
-      "Êtes-vous sûr de vouloir supprimer votre compte ? Cette action est irréversible."
-    );
-    if (!confirmDelete) return;
+    if (!user) {
+      alert("Aucun utilisateur connecté");
+      return;
+    }
+
+    setLoading(true);
 
     try {
+      const db = getDatabase();
+      const userRef = ref(db, `users/${user.uid}`);
+
+      // 1️⃣ Demander le mot de passe à l'utilisateur
+      const password = prompt(
+        "Veuillez entrer votre mot de passe pour confirmer :"
+      );
+      if (!password) {
+        alert("Suppression annulée.");
+        setLoading(false);
+        return;
+      }
+
+      // 2️⃣ Création des credentials et réauthentification
+      const credential = EmailAuthProvider.credential(user.email, password);
+      await reauthenticateWithCredential(user, credential);
+
+      // 3️⃣ Supprimer l'utilisateur de la base de données
+      await remove(userRef);
+
+      // 4️⃣ Supprimer l'utilisateur de Firebase Authentication
       await deleteUser(user);
-      alert("Compte supprimé avec succès !");
+
+      // 5️⃣ Déconnexion et redirection
+      await signOut(auth);
       router.push("/connexion");
+
+      alert("Compte supprimé avec succès !");
     } catch (error) {
-      console.error("Erreur lors de la suppression :", error);
-      alert("Erreur lors de la suppression du compte. Réessayez.");
+      console.error("Erreur lors de la suppression du compte :", error.message);
+      alert(`Erreur : ${error.message}`);
+    } finally {
+      setLoading(false);
     }
   };
 

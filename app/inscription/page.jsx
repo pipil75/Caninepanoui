@@ -65,6 +65,8 @@ const MediaInscription = () => {
   const [codepostal, setCodepostal] = useState("");
   const auth = getAuth();
   const router = useRouter();
+  const [imagePreview, setImagePreview] = useState(null);
+
   const handleRegister = async (e) => {
     e.preventDefault();
 
@@ -101,14 +103,22 @@ const MediaInscription = () => {
       });
 
       // Téléchargement de l'image si elle existe
+      // Téléchargement de l'image si elle existe
       let imageUrl = "";
       if (image) {
-        const imageRef = storageRef(
-          storage,
-          `images/${userCredential.user.uid}/${image.name}`
-        );
-        await uploadBytes(imageRef, image);
-        imageUrl = await getDownloadURL(imageRef);
+        try {
+          const imageRef = storageRef(
+            storage,
+            `images/${userCredential.user.uid}/${image.name}`
+          );
+          await uploadBytes(imageRef, image);
+          imageUrl = await getDownloadURL(imageRef);
+        } catch (error) {
+          setError(
+            "Erreur lors du téléchargement de l'image : " + error.message
+          );
+          return; // Stoppe l'inscription si l'upload échoue
+        }
       }
 
       // Sauvegarde des données utilisateur dans Firebase Database
@@ -174,17 +184,26 @@ const MediaInscription = () => {
 
       // Vérifier la taille du fichier
       if (file.size > 5 * 1024 * 1024) {
+        // 5 MB max
         setError("La taille de l'image ne doit pas dépasser 5 MB.");
         return;
       }
 
       // Si tout est valide, continuez le traitement
       setError(""); // Effacer les erreurs précédentes
+
       const reader = new FileReader();
       reader.onload = (event) => {
-        setImagePreview(event.target.result); // Afficher un aperçu si nécessaire
+        setImagePreview(event.target.result); // Afficher l'aperçu de l'image
       };
+
+      reader.onerror = (error) => {
+        setError("Erreur lors de la lecture du fichier.");
+      };
+
       reader.readAsDataURL(file);
+    } else {
+      setError("Aucun fichier sélectionné.");
     }
   };
 
