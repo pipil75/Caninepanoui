@@ -14,6 +14,8 @@ export default function RootLayout({ children }) {
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <meta property="og:title" content={metadata.title} />
         <meta property="og:description" content={metadata.description} />
+        <meta name="description" content={metadata.description} />
+
         <meta
           property="og:image"
           content="https://caninepanoui.vercel.app/_next/image?url=%2Fimages%2Fblob.png&w=640&q=75"

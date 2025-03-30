@@ -23,6 +23,7 @@ import {
   ref as storageRef,
   uploadBytes,
   getDownloadURL,
+  getStorage,
 } from "firebase/storage";
 import styles from "../connexion/Connexion.module.css";
 import { useRouter } from "next/navigation";
@@ -66,7 +67,7 @@ const MediaInscription = () => {
   const auth = getAuth();
   const router = useRouter();
   const [imagePreview, setImagePreview] = useState(null);
-
+  const storage = getStorage();
   const handleRegister = async (e) => {
     e.preventDefault();
 
@@ -107,18 +108,32 @@ const MediaInscription = () => {
       let imageUrl = "";
       if (image) {
         try {
+          console.log("Début de l'upload de l'image...");
+          console.log("Nom du fichier :", image.name);
+          console.log("Taille du fichier :", image.size, "bytes");
+
           const imageRef = storageRef(
             storage,
-            `images/${userCredential.user.uid}/${image.name}`
+            `images/${userCredential.user.uid}/${Date.now()}_${image.name}`
           );
+          console.log("Référence de l'image créée :", imageRef);
+
           await uploadBytes(imageRef, image);
+          console.log("Upload réussi !");
+
           imageUrl = await getDownloadURL(imageRef);
+          console.log("URL de l'image :", imageUrl);
         } catch (error) {
+          console.error("Erreur lors de l'upload :", error);
           setError(
             "Erreur lors du téléchargement de l'image : " + error.message
           );
-          return; // Stoppe l'inscription si l'upload échoue
+          return; // On arrête l'exécution si erreur
         }
+      } else {
+        console.error("Aucune image sélectionnée !");
+        setError("Veuillez sélectionner une image avant de continuer.");
+        return; // On arrête si pas d'image sélectionnée
       }
 
       // Sauvegarde des données utilisateur dans Firebase Database
@@ -172,39 +187,50 @@ const MediaInscription = () => {
     }
   };
   const handleImageChange = (e) => {
-    const file = e.target.files[0];
-    const allowedTypes = ["image/jpeg", "image/png", "image/webp"]; // Formats d'image légers autorisés
+    console.log("📂 Événement déclenché, e.target:", e.target);
+    console.log("📂 Fichiers détectés :", e.target.files);
 
-    if (file) {
-      // Vérifier le type de fichier
-      if (!allowedTypes.includes(file.type)) {
-        setError("Seules les images JPEG, PNG ou WebP sont acceptées.");
-        return;
-      }
-
-      // Vérifier la taille du fichier
-      if (file.size > 5 * 1024 * 1024) {
-        // 5 MB max
-        setError("La taille de l'image ne doit pas dépasser 5 MB.");
-        return;
-      }
-
-      // Si tout est valide, continuez le traitement
-      setError(""); // Effacer les erreurs précédentes
-
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        setImagePreview(event.target.result); // Afficher l'aperçu de l'image
-      };
-
-      reader.onerror = (error) => {
-        setError("Erreur lors de la lecture du fichier.");
-      };
-
-      reader.readAsDataURL(file);
-    } else {
+    if (!e.target.files || e.target.files.length === 0) {
+      console.error("❌ Aucun fichier détecté !");
       setError("Aucun fichier sélectionné.");
+      return;
     }
+
+    const file = e.target.files[0];
+    console.log("✅ Fichier sélectionné :", file);
+
+    const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
+
+    // Vérifier le type de fichier
+    if (!allowedTypes.includes(file.type)) {
+      console.error("❌ Type de fichier non autorisé :", file.type);
+      setError("Seules les images JPEG, PNG ou WebP sont acceptées.");
+      return;
+    }
+
+    // Vérifier la taille du fichier
+    if (file.size > 5 * 1024 * 1024) {
+      console.error("❌ Taille de fichier trop grande :", file.size);
+      setError("La taille de l'image ne doit pas dépasser 5 MB.");
+      return;
+    }
+
+    // Si tout est valide, continuez le traitement
+    setError(""); // Effacer les erreurs précédentes
+    setImage(file); // Stocker le fichier sélectionné
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      setImagePreview(event.target.result); // Afficher l'aperçu de l'image
+      console.log("🖼️ Aperçu de l'image mis à jour !");
+    };
+
+    reader.onerror = (error) => {
+      console.error("❌ Erreur lors de la lecture du fichier :", error);
+      setError("Erreur lors de la lecture du fichier.");
+    };
+
+    reader.readAsDataURL(file);
   };
 
   return (
@@ -343,7 +369,7 @@ const MediaInscription = () => {
                 )}
                 <input
                   type="file"
-                  accept="image/jpeg, image/png, image/webp" // Restreint les types de fichiers
+                  accept="image/jpeg, image/png, image/webp"
                   onChange={handleImageChange}
                 />
                 ;
