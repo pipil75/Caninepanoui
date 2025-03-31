@@ -68,6 +68,7 @@ const MediaInscription = () => {
   const router = useRouter();
   const [imagePreview, setImagePreview] = useState(null);
   const storage = getStorage();
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const handleRegister = async (e) => {
     e.preventDefault();
 
@@ -154,6 +155,7 @@ const MediaInscription = () => {
       setConfirmationMessage(
         "Inscription réussie ! Un e-mail de vérification a été envoyé."
       );
+      setIsDialogOpen(true);
 
       // Réinitialisation des champs
       setEmail("");

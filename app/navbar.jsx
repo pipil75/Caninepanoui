@@ -99,17 +99,17 @@ function ResponsiveAppBar() {
         return;
       }
 
-      // 2️⃣ Création des credentials et réauthentification
+      // Création des credentials et réauthentification
       const credential = EmailAuthProvider.credential(user.email, password);
       await reauthenticateWithCredential(user, credential);
 
-      // 3️⃣ Supprimer l'utilisateur de la base de données
+      // 3 Supprimer l'utilisateur de la base de données
       await remove(userRef);
 
-      // 4️⃣ Supprimer l'utilisateur de Firebase Authentication
+      //  Supprimer l'utilisateur de Firebase Authentication
       await deleteUser(user);
 
-      // 5️⃣ Déconnexion et redirection
+      // Déconnexion et redirection
       await signOut(auth);
       router.push("/connexion");
 
