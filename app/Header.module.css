@@ -1,11 +1,16 @@
 /* Header Styles */
 .header {
   background-color: #847774; /* Couleur de fond */
-  padding: 15px 20px; /* Espacement */
-  /* Répartit les liens sur toute la largeur */
-  align-items: center; /* Centre verticalement */
-  width: 100%;
-  box-sizing: border-box; /* Garde la largeur fixe */
+  /* Couleur de fond */
+  display: flex;
+  flex-direction: column;
+  position: fixed; /* Fixe le header en bas */
+  left: 0;
+  bottom: 0;
+  width: 100%; /* Occupe toute la largeur de l'écran */
+  z-index: 1000;
+  box-sizing: border-box; /* Assure que padding ne fait pas déborder le contenu */
+  overflow: hidden; /* Empêche le texte de dépasser */ /* Assure que le header est au-dessus des autres éléments */
 }
 
 /* Navigation List */
@@ -14,9 +19,9 @@
   padding: 0;
   margin: 0;
   display: flex;
-  justify-content: space-between; /* Espacement entre les liens */
+  justify-content: space-between;
   align-items: center;
-  flex-wrap: wrap; /* Permet aux liens de passer sur une nouvelle ligne si nécessaire */
+  flex-wrap: wrap; /* Permet aux éléments de se réorganiser sur de petits écrans */
 }
 
 /* Navigation List Items */
@@ -36,28 +41,34 @@
   color: rgba(0, 0, 0, 1);
 }
 
-/* Responsiveness: Small Screens */
+/* Réduction de la taille des liens et réajustement du padding sur mobile */
 @media (max-width: 768px) {
-  .footer {
-    flex-direction: column; /* Passer en colonne sur petit écran */
-    gap: 10px; /* Espacement entre les liens */
-    padding: 10px;
-  }
-  .navList li {
-    margin: 5px 0; /* Réduit les marges */
-  }
-
-  .link {
-    font-size: 16px; /* Réduit la taille des liens */
-  }
-}
-
-@media (max-width: 480px) {
   .header {
     padding: 10px; /* Réduit le padding pour les petits écrans */
   }
 
   .link {
+    font-size: 16px; /* Réduit la taille des liens */
+    text-align: center; /* Centre le texte pour une meilleure présentation sur mobile */
+  }
+
+  .navList {
+    flex-direction: column; /* Les liens s'affichent maintenant en colonne */
+    align-items: center; /* Centrer les liens verticalement */
+  }
+
+  .navList li {
+    margin: 5px 0; /* Espacement vertical entre les éléments */
+  }
+}
+
+/* Réduction supplémentaire pour les très petits écrans */
+@media (max-width: 480px) {
+  .link {
     font-size: 14px; /* Réduction supplémentaire pour les téléphones */
+  }
+
+  .header {
+    padding: 10px; /* Réduit encore le padding pour les très petits écrans */
   }
 }

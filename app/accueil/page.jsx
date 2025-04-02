@@ -53,7 +53,6 @@ export default function MultiActionAreaCard() {
           "Erreur lors de la configuration de la persistance :",
           error
         );
-        // Optionnel : gérer l'erreur ici, par exemple, afficher un message à l'utilisateur
       });
   }, [auth, router]);
 
@@ -69,7 +68,7 @@ export default function MultiActionAreaCard() {
           const proUsers = Object.entries(data)
             .map(([id, user]) => ({
               ...user, // Conserver les autres propriétés de l'utilisateur
-              id, // Ajouter l'ID de l'utilisateur
+              id,
             }))
             .filter((user) => user.role === "pro"); // Filtrer les utilisateurs pros
           setUsers(proUsers);
@@ -213,7 +212,6 @@ export default function MultiActionAreaCard() {
         )}
       </Grid>
 
-      {/* Pied de page */}
       <Header />
     </Box>
   );

@@ -20,7 +20,7 @@ import {
 } from "@mui/material";
 import ResponsiveAppBar from "../navbar";
 import CookieAccepter from "../component/cookie/page";
-
+import Header from "../header";
 export default function ProfessionalAppointments() {
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -161,30 +161,67 @@ export default function ProfessionalAppointments() {
       ) : (
         <List>
           {appointments.map((appointment) => (
-            <ListItem key={appointment.id}>
+            <ListItem
+              key={appointment.id}
+              sx={{
+                display: "flex",
+                justifyContent: "flex-start", // Aligné à gauche par défaut
+                "@media (max-width: 600px)": {
+                  justifyContent: "center", // Centré en mobile
+                },
+              }}
+            >
               <Card
                 sx={{
                   width: "100%",
+                  maxWidth: 400,
                   mb: 2,
                   display: "flex",
                   alignItems: "center",
                   padding: 2,
+                  flexWrap: "wrap",
+                  "@media (max-width: 600px)": {
+                    flexDirection: "column",
+                    alignItems: "center",
+                    textAlign: "center",
+                  },
                 }}
               >
                 <Avatar
                   src={appointment.userImage || "/default-profile.png"}
                   alt="User Profile"
-                  sx={{ width: 60, height: 60, marginRight: 2 }}
+                  sx={{
+                    width: 60,
+                    height: 60,
+                    marginRight: 2,
+                    "@media (max-width: 600px)": {
+                      width: 50,
+                      height: 50,
+                      marginBottom: 1,
+                    },
+                  }}
                 />
-                <CardContent sx={{ flex: 1 }}>
-                  <Typography>Email: {appointment.userEmail}</Typography>
-                  <Typography>Date: {appointment.date}</Typography>
-                  <Typography>Heure: {appointment.time}</Typography>
+                <CardContent sx={{ flex: 1, padding: "8px 0" }}>
+                  <Typography variant="body1">
+                    Email: {appointment.userEmail}
+                  </Typography>
+                  <Typography variant="body1">
+                    Date: {appointment.date}
+                  </Typography>
+                  <Typography variant="body1">
+                    Heure: {appointment.time}
+                  </Typography>
                 </CardContent>
                 <Button
                   variant="contained"
                   color="error"
                   onClick={() => handleDeleteAppointment(appointment.id)}
+                  sx={{
+                    "@media (max-width: 600px)": {
+                      width: "100%",
+                      marginTop: 1,
+                    },
+                  }}
                 >
                   Supprimer
                 </Button>
@@ -193,6 +230,7 @@ export default function ProfessionalAppointments() {
           ))}
         </List>
       )}
+      <Header />
     </div>
   );
 }

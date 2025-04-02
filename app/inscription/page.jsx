@@ -105,7 +105,6 @@ const MediaInscription = () => {
       });
 
       // Téléchargement de l'image si elle existe
-      // Téléchargement de l'image si elle existe
       let imageUrl = "";
       if (image) {
         try {
@@ -169,7 +168,9 @@ const MediaInscription = () => {
       setAdressse("");
       setCodepostal("");
       console.log("Redirection vers /connexion");
-      router.push("/connexion");
+      setTimeout(() => {
+        router.push("/connexion");
+      }, 3000);
     } catch (error) {
       // Gestion des erreurs Firebase
       switch (error.code) {
@@ -193,8 +194,8 @@ const MediaInscription = () => {
     console.log("📂 Fichiers détectés :", e.target.files);
 
     if (!e.target.files || e.target.files.length === 0) {
-      console.error("❌ Aucun fichier détecté !");
-      setError("Aucun fichier sélectionné.");
+      console.error("❌ Aucune image détecté !");
+      setError("Aucune image sélectionné.");
       return;
     }
 
@@ -308,18 +309,18 @@ const MediaInscription = () => {
                   required
                   fullWidth
                   id="email"
-                  label=" entrée une Adresse e-mail paypal pro pour les professionels "
+                  label="entrez un adresse mail paypal pour les profesionel "
                   name="email"
                   autoComplete="email"
                   variant="standard"
-                  onChange={(e) => {
-                    setEmail(e.target.value);
+                  onBlur={(e) => {
                     if (!emailRegex.test(e.target.value)) {
                       setError("Adresse e-mail invalide.");
                     } else {
                       setError(null);
                     }
                   }}
+                  onChange={(e) => setEmail(e.target.value)}
                 />
                 <TextField
                   value={password}
@@ -369,12 +370,13 @@ const MediaInscription = () => {
                     sx={{ mt: 2 }}
                   />
                 )}
+
                 <input
                   type="file"
                   accept="image/jpeg, image/png, image/webp"
                   onChange={handleImageChange}
                 />
-                ;
+
                 <Button
                   type="submit"
                   fullWidth

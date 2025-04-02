@@ -33,7 +33,7 @@ export default function AdminPanel() {
   useEffect(() => {
     if (user) {
       if (user.email !== "aprilraphaella75@gmail.com") {
-        setErrorMessage("You don't have admin privileges.");
+        setErrorMessage("vous n'etes pas admin.");
       } else {
         fetchData(); // Récupère les données uniquement si l'admin est connecté
       }
@@ -111,7 +111,7 @@ export default function AdminPanel() {
 
   return (
     <div>
-      <h1>Admin Panel</h1>
+      <h1>Admin</h1>
       {errorMessage ? (
         <p>{errorMessage}</p>
       ) : (
