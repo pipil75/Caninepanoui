@@ -102,23 +102,31 @@ export default function MultiActionAreaCard() {
       sx={{
         backgroundColor: "#6F6561", // Couleur de fond derrière les cartes
         minHeight: "100vh", // Prend toute la hauteur de l'écran
-        padding: "40px",
+        padding: "65px",
+        display: "flex", // Utilisation de flexbox pour organiser le contenu
+        flexDirection: "column", // Aligner les éléments en colonne
+        justifyContent: "space-between", // Laisser de l'espace entre les sections
       }}
     >
       {/* Barre de navigation */}
-      <ResponsiveAppBar marginBottom={30} marginTop={30} />
+      <ResponsiveAppBar />
       <CookieAccepter />
 
       {/* Titre principal */}
       <Typography
-        variant="h5 small"
+        variant="h3"
         align="center"
         sx={{
           color: "#FFFFFF", // Texte en blanc pour le contraste
           fontWeight: "bold",
+          fontSize: { xs: "0.9rem", sm: "1.1rem", md: "1.3rem" }, // Plus petit sur mobile
+          lineHeight: 1.4, // Réduction de l'espacement entre les lignes
+          maxWidth: "80%", // Réduire la largeur pour que le texte ne prenne pas toute la largeur de l'écran
+          margin: "0 auto", // Centrer le texte
+          paddingX: 2, // Ajout d'un peu de padding horizontal pour éviter le texte trop collé aux bords
         }}
       >
-        <h1>
+        <h3>
           Bienvenue sur notre plateforme ! Ici, vous trouverez une liste
           complète des éducateurs disponibles pour vous accompagner dans vos
           besoins. Que ce soit pour du soutien, des conseils ou un suivi
@@ -126,16 +134,17 @@ export default function MultiActionAreaCard() {
           pour vous aider à atteindre vos objectifs. N'hésitez pas à explorer
           les profils pour découvrir leurs domaines d'expertise et à les
           contacter pour toute question !
-        </h1>
+        </h3>
       </Typography>
 
       {/* Conteneur des cartes */}
       <Grid
         marginBottom={10}
-        marginTop={10}
+        marginTop={4}
         container
-        spacing={4}
+        spacing={2} // Ajusté pour moins d'espace entre les cartes
         justifyContent="center"
+        sx={{ flexWrap: "wrap" }} // Permet de gérer les cartes qui se replient bien sur les petits écrans
       >
         {users.length > 0 ? (
           users.map((user, index) => (
@@ -150,7 +159,8 @@ export default function MultiActionAreaCard() {
                     transform: "translateY(-8px)",
                     boxShadow: "0px 12px 25px rgba(0, 0, 0, 0.2)",
                   },
-                  padding: "20px",
+                  padding: "16px",
+                  maxWidth: "100%",
                 }}
               >
                 <CardContent sx={{ textAlign: "center" }}>
