@@ -100,110 +100,99 @@ export default function MultiActionAreaCard() {
   return (
     <Box
       sx={{
-        backgroundColor: "#6F6561", // Couleur de fond derrière les cartes
-        minHeight: "100vh", // Prend toute la hauteur de l'écran
-        padding: "65px",
-        display: "flex", // Utilisation de flexbox pour organiser le contenu
-        flexDirection: "column", // Aligner les éléments en colonne
-        justifyContent: "space-between", // Laisser de l'espace entre les sections
+        backgroundColor: "#6F6561",
+        minHeight: "100vh",
+        padding: "20px 10px",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
       }}
     >
-      {/* Barre de navigation */}
       <ResponsiveAppBar />
       <CookieAccepter />
 
-      {/* Titre principal */}
       <Typography
-        variant="h3"
+        variant="h1"
         align="center"
         sx={{
-          color: "#FFFFFF", // Texte en blanc pour le contraste
+          color: "#FFFFFF",
           fontWeight: "bold",
-          fontSize: { xs: "0.9rem", sm: "1.1rem", md: "1.3rem" }, // Plus petit sur mobile
-          lineHeight: 1.4, // Réduction de l'espacement entre les lignes
-          maxWidth: "80%", // Réduire la largeur pour que le texte ne prenne pas toute la largeur de l'écran
-          margin: "0 auto", // Centrer le texte
-          paddingX: 2, // Ajout d'un peu de padding horizontal pour éviter le texte trop collé aux bords
+          fontSize: { xs: "1.5rem", sm: "2rem", md: "2rem" },
+          maxWidth: "90%",
+          marginBottom: 3,
+          lineHeight: 1.5,
         }}
       >
-        <h3>
-          Bienvenue sur notre plateforme ! Ici, vous trouverez une liste
-          complète des éducateurs disponibles pour vous accompagner dans vos
-          besoins. Que ce soit pour du soutien, des conseils ou un suivi
-          personnalisé, chaque éducateur propose des compétences spécifiques
-          pour vous aider à atteindre vos objectifs. N'hésitez pas à explorer
-          les profils pour découvrir leurs domaines d'expertise et à les
-          contacter pour toute question !
-        </h3>
+        Bienvenue sur notre plateforme !
       </Typography>
-
-      {/* Conteneur des cartes */}
+      <Typography
+        variant="h5"
+        align="center"
+        sx={{
+          color: "#FFFFFF",
+          maxWidth: "85%",
+          lineHeight: 1.6,
+          marginBottom: 4,
+          fontSize: { xs: "1rem", sm: "1.2rem", md: "1.4rem" },
+        }}
+      >
+        Ici, vous trouverez une liste complète des éducateurs disponibles pour
+        vous accompagner dans vos besoins. Que ce soit pour du soutien, des
+        conseils ou un suivi personnalisé, chaque éducateur propose des
+        compétences spécifiques pour vous aider à atteindre vos objectifs.
+        N'hésitez pas à explorer les profils pour découvrir leurs domaines
+        d'expertise et à les contacter pour toute question !
+      </Typography>
       <Grid
-        marginBottom={10}
-        marginTop={4}
         container
-        spacing={2} // Ajusté pour moins d'espace entre les cartes
+        spacing={3}
         justifyContent="center"
-        sx={{ flexWrap: "wrap" }} // Permet de gérer les cartes qui se replient bien sur les petits écrans
+        sx={{ width: "100%", maxWidth: "1200px" }}
       >
         {users.length > 0 ? (
           users.map((user, index) => (
             <Grid item xs={12} sm={6} md={4} key={index}>
               <Card
                 sx={{
-                  backgroundColor: "#FCFEF7", // Couleur de fond des cartes
-                  borderRadius: "12px",
-                  boxShadow: "0px 8px 20px rgba(0, 0, 0, 0.1)", // Effet d'ombre
-                  transition: "transform 0.3s, box-shadow 0.3s",
-                  "&:hover": {
-                    transform: "translateY(-8px)",
-                    boxShadow: "0px 12px 25px rgba(0, 0, 0, 0.2)",
-                  },
-                  padding: "16px",
-                  maxWidth: "100%",
+                  backgroundColor: "#FCFEF7",
+                  borderRadius: "15px",
+                  boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.1)",
+                  padding: "15px",
+                  textAlign: "center",
+                  marginBottom: "150px",
+                  cursor: "pointer",
                 }}
               >
-                <CardContent sx={{ textAlign: "center" }}>
+                <CardContent>
                   <Typography
                     variant="h6"
                     fontWeight="bold"
-                    sx={{ color: "#333333" }} // Texte sombre pour un bon contraste
+                    sx={{ color: "#333" }}
                   >
-                    Nom : {user.name}
+                    {user.name}
                   </Typography>
-                  <Typography variant="body2" sx={{ color: "#555555" }}>
-                    Email : {user.email}
+                  <Typography variant="body2" sx={{ color: "#555" }}>
+                    {user.email}
                   </Typography>
-                  <Typography variant="body2" sx={{ color: "#555555" }}>
-                    SIRET : {user.siret || "Non fourni"}
-                  </Typography>
-                  <Typography variant="body2" sx={{ color: "#555555" }}>
-                    adresse: {user.codepostal || "Non fourni"}
+                  <Typography variant="body2" sx={{ color: "#555" }}>
+                    {user.codepostal}
                   </Typography>
                   <Box
                     component="img"
                     src={user.image || "https://via.placeholder.com/150"}
                     alt={user.name}
                     sx={{
-                      width: "150px",
-                      height: "150px",
-                      margin: "20px auto",
-                      borderRadius: "8px",
+                      width: "120px",
+                      height: "120px",
+                      margin: "15px auto",
+                      borderRadius: "50%",
                     }}
                   />
                 </CardContent>
-                {/* Bouton Détail */}
                 <CardActions sx={{ justifyContent: "center" }}>
                   <Button
-                    size="small"
                     variant="contained"
-                    sx={{
-                      backgroundColor: "#847774", // Couleur principale des boutons
-                      color: "#FFFFFF",
-                      "&:hover": {
-                        backgroundColor: "#6F6561", // Légèrement plus sombre au survol
-                      },
-                    }}
+                    sx={{ backgroundColor: "#847774", color: "#fff" }}
                     onClick={() => handleOpenUserDetail(user.uid)}
                   >
                     Détail
@@ -221,7 +210,6 @@ export default function MultiActionAreaCard() {
           </Typography>
         )}
       </Grid>
-
       <Header />
     </Box>
   );
