@@ -45,7 +45,18 @@ export default function MediaCard() {
         password
       );
       const userId = userCredential.user.uid;
+      const user = userCredential.user;
 
+      await user.reload();
+
+      // Vérifie si l'e-mail est confirmé
+      if (!user.emailVerified) {
+        setError(
+          "Veuillez vérifier votre adresse e-mail avant de vous connecter."
+        );
+        setLoading(false);
+        return;
+      }
       // Vérifiez le rôle de l'utilisateur
       const userRoleRef = ref(database, `users/${userId}/role`);
       const snapshot = await get(userRoleRef);
@@ -57,8 +68,8 @@ export default function MediaCard() {
         throw new Error("Rôle de l'utilisateur non trouvé");
       }
     } catch (error) {
-      setError("Erreur d'authentification. Vérifiez vos identifiants.");
-      console.error(error);
+      console.error("Firebase auth error:", error.code, error.message);
+      setError(`Erreur : ${error.message}`);
     } finally {
       // Réinitialiser les champs après la tentative de connexion
       setEmail("");

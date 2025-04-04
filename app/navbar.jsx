@@ -73,9 +73,8 @@ function ResponsiveAppBar() {
   const handleLogout = () => {
     auth.signOut();
     router.push("/connexion");
-  }; // Assure-toi d'importer le router
+  };
   const handleDeleteAccount = async () => {
-    const auth = getAuth();
     const user = auth.currentUser;
 
     if (!user) {
@@ -89,7 +88,7 @@ function ResponsiveAppBar() {
       const db = getDatabase();
       const userRef = ref(db, `users/${user.uid}`);
 
-      // 1️⃣ Demander le mot de passe à l'utilisateur
+      // Demander le mot de passe à l'utilisateur
       const password = prompt(
         "Veuillez entrer votre mot de passe pour confirmer :"
       );
@@ -103,7 +102,7 @@ function ResponsiveAppBar() {
       const credential = EmailAuthProvider.credential(user.email, password);
       await reauthenticateWithCredential(user, credential);
 
-      // 3 Supprimer l'utilisateur de la base de données
+      //  Supprimer l'utilisateur de la base de données
       await remove(userRef);
 
       //  Supprimer l'utilisateur de Firebase Authentication
