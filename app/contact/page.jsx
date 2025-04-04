@@ -5,12 +5,10 @@ import React from "react";
 const Contact = () => {
   return (
     <div style={styles.container}>
-      {/* En-tête */}
       <header style={styles.header}>
         <h1>Contactez-nous</h1>
       </header>
 
-      {/* Contenu principal */}
       <main style={styles.section}>
         <h2>Nous Contacter</h2>
         <p>

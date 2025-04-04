@@ -121,7 +121,6 @@ export default function Cardprofil() {
           paddingBottom: "64px",
           boxSizing: "border-box",
           minHeight: "calc(100vh - -45px)",
-          // ajuste cette valeur en fonction de la hauteur de ta navbar et du footer
         }}
       >
         <Card sx={{ maxWidth: 600, backgroundColor: "primary.main" }}>

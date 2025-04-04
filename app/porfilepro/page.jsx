@@ -57,7 +57,7 @@ export default function ProfessionalAppointments() {
 
                   appointmentsList = appointmentsList.filter((appointment) => {
                     const appointmentDate = new Date(appointment.date);
-                    appointmentDate.setHours(0, 0, 0, 0); // Ignore l'heure
+                    appointmentDate.setHours(0, 0, 0, 0);
 
                     console.log(
                       `Comparaison : ${appointment.date} >= ${
@@ -68,7 +68,7 @@ export default function ProfessionalAppointments() {
                     return appointmentDate >= today;
                   });
 
-                  console.log("Rendez-vous après filtrage :", appointmentsList); // 🔍 Debug
+                  console.log("Rendez-vous après filtrage :", appointmentsList);
 
                   // Récupérer les images des utilisateurs
                   const appointmentsWithImages = await Promise.all(

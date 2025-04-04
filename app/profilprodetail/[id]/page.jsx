@@ -137,7 +137,7 @@ export default function UserDetailPage() {
         userId: currentUser.uid,
         userName: currentUser.displayName || "Utilisateur Anonyme",
         userEmail: currentUser.email,
-        proName: professional?.name || "Professionnel Anonyme", // Utilisez le nom du professionnel
+        proName: professional?.name || "Professionnel Anonyme",
         proEmail: user && user.email ? user.email : "",
       };
 

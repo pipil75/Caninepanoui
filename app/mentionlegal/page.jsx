@@ -5,12 +5,10 @@ import React from "react";
 const MentionsLegales = () => {
   return (
     <div style={styles.container}>
-      {/* En-tête */}
       <header style={styles.header}>
         <h1>Mentions Légales et Politique de Confidentialité</h1>
       </header>
 
-      {/* Section Mentions Légales */}
       <section style={styles.section}>
         <h2>Mentions Légales</h2>
         <p>
@@ -20,7 +18,6 @@ const MentionsLegales = () => {
         </p>
       </section>
 
-      {/* Section Politique de Confidentialité */}
       <section style={styles.section}>
         <h2>Politique de Confidentialité et Traitement des Données</h2>
         <p>
@@ -45,18 +42,6 @@ const MentionsLegales = () => {
         </p>
       </section>
 
-      {/* Section Double Opt-in */}
-      <section style={styles.section}>
-        <h2>Double Opt-in pour les Collectes de Données</h2>
-        <p>
-          Nous avons mis en place un processus de <strong>double opt-in</strong>{" "}
-          pour garantir que vous consentez explicitement à la collecte et au
-          traitement de vos données personnelles. Vous recevrez un e-mail de
-          confirmation pour valider votre consentement.
-        </p>
-      </section>
-
-      {/* Section Propriété Intellectuelle */}
       <section style={styles.section}>
         <h2>Respect de la Propriété Intellectuelle</h2>
         <p>
@@ -77,7 +62,6 @@ const MentionsLegales = () => {
   );
 };
 
-// Styles inline pour simplicité
 const styles = {
   container: {
     fontFamily: "'Arial', sans-serif",

@@ -84,7 +84,7 @@ export default function MediaCard() {
         variant="h5 small"
         align="center"
         sx={{
-          color: "#6F6561", // Texte en blanc pour le contraste
+          color: "#6F6561",
           fontFamily: "arial",
           marginTop: 30,
           fontSize: "10px",
@@ -131,7 +131,7 @@ export default function MediaCard() {
                 name="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                autoComplete="off" // Désactiver l'autocomplétion
+                autoComplete="off"
                 variant="standard"
                 margin="normal"
               />
@@ -144,8 +144,7 @@ export default function MediaCard() {
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                autoComplete="off" // Désactiver l'autocomplétion
-                variant="standard"
+                autoComplete="off"
                 margin="normal"
               />
               <Button
