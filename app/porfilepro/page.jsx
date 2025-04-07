@@ -151,7 +151,22 @@ export default function ProfessionalAppointments() {
     <div>
       <ResponsiveAppBar />
       <CookieAccepter />
-      <Typography variant="h4" gutterBottom>
+      <Typography
+        variant="h5"
+        align="center"
+        sx={{
+          color: "#847774",
+          maxWidth: "85%",
+          lineHeight: 1.6,
+          marginBottom: 4,
+          fontSize: { xs: "1rem", sm: "1.2rem", md: "1.4rem" },
+        }}
+      >
+        Hello et bienvenue dans ton espace pro ! Ici, tout est pensé pour te
+        faciliter la vie : tu peux consulter tes rendez-vous, lire les messages
+        de tes clients{" "}
+      </Typography>
+      <Typography variant="h6" gutterBottom>
         Mes Rendez-vous
       </Typography>
       {appointments.length === 0 ? (

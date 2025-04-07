@@ -123,8 +123,10 @@ function ResponsiveAppBar() {
 
   const menuItems = [
     { label: "Accueil", path: "/accueil", visible: role === "user" },
+    { label: "Accueil", path: "/porfilepro", visible: role === "pro" },
     { label: "Mon profil", path: "/profil", visible: true },
     { label: "Messages", path: "/message", visible: !!role },
+    { label: "Mes rendez-vous", path: "/rdvuser", visible: role === "user" },
     { label: "Déconnexion", path: null, visible: true, action: handleLogout },
     {
       label: "Supprimer mon compte",
@@ -132,8 +134,6 @@ function ResponsiveAppBar() {
       visible: true,
       action: handleDeleteAccount,
     },
-    { label: "Accueil", path: "/porfilepro", visible: role === "pro" },
-    { label: "Mes rendez-vous", path: "/rdvuser", visible: role === "user" },
   ];
 
   const handleProfileClick = () => {
