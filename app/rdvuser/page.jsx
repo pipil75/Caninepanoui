@@ -4,7 +4,7 @@ import { ref, get, remove } from "firebase/database";
 import { auth, database } from "../../lib/firebase";
 import { Card, CardContent, Typography, Button } from "@mui/material";
 import { useRouter } from "next/navigation";
-
+import ResponsiveAppBar from "../navbar";
 const UserAppointments = () => {
   const [appointments, setAppointments] = useState([]);
   const [userId, setUserId] = useState(null);
@@ -75,6 +75,7 @@ const UserAppointments = () => {
 
   return (
     <div style={{ padding: "20px" }}>
+      <ResponsiveAppBar />
       <h2>Mes Rendez-vous</h2>
       {appointments.length > 0 ? (
         appointments.map((appointment) => (

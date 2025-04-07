@@ -167,94 +167,97 @@ export default function ProMessages() {
   }
 
   return (
-    <Box sx={{ padding: 4 }}>
+    <div>
       <ResponsiveAppBar />
-      <Typography variant="h4" gutterBottom>
-        Conversations Professionnel
-      </Typography>
-      {conversations.length === 0 ? (
-        <Typography variant="h6" color="text.secondary">
-          Aucune conversation trouvée.
+      <Box sx={{ padding: 10 }}>
+        <Typography variant="h4" gutterBottom>
+          Conversations Professionnel
         </Typography>
-      ) : (
-        <Grid container spacing={3}>
-          {conversations.map((conversation) => (
-            <Grid item xs={12} md={6} key={conversation.id}>
-              <Card sx={{ boxShadow: 3 }}>
-                <CardContent>
-                  <Typography variant="h6" gutterBottom>
-                    Avec : {conversation.recipientName}
-                  </Typography>
+        {conversations.length === 0 ? (
+          <Typography variant="h6" color="text.secondary">
+            Aucune conversation trouvée.
+          </Typography>
+        ) : (
+          <Grid container spacing={3}>
+            {conversations.map((conversation) => (
+              <Grid item xs={12} md={6} key={conversation.id}>
+                <Card sx={{ boxShadow: 3 }}>
+                  <CardContent>
+                    <Typography variant="h6" gutterBottom>
+                      Avec : {conversation.recipientName}
+                    </Typography>
 
-                  {/* Affichage des messages */}
-                  <Box sx={{ marginTop: 2 }}>
-                    <Typography variant="subtitle1">Messages :</Typography>
-                    {conversation.messages.map((msg) => (
-                      <Box
-                        key={msg.id}
-                        sx={{
-                          border: "1px solid #ddd",
-                          borderRadius: "8px",
-                          padding: "8px",
-                          marginBottom: "8px",
-                          backgroundColor:
-                            msg.senderId === auth.currentUser.uid
-                              ? "#dcf8c6"
-                              : "#fff",
-                        }}
-                      >
-                        <Typography variant="body2">
-                          <strong>De :</strong> {msg.senderName}
-                        </Typography>
-                        <Typography variant="body2">
-                          <strong>Message :</strong> {msg.message}
-                        </Typography>
-                        <Typography variant="caption">
-                          Envoyé le : {new Date(msg.timestamp).toLocaleString()}
-                        </Typography>
-                      </Box>
-                    ))}
-                  </Box>
-
-                  {/* Formulaire de réponse */}
-                  <Box sx={{ marginTop: 2 }}>
-                    <TextField
-                      fullWidth
-                      size="small"
-                      placeholder="Répondre..."
-                      value={reply[conversation.id] || ""}
-                      onChange={(e) =>
-                        handleReplyChange(conversation.id, e.target.value)
-                      }
-                    />
-                    <Box sx={{ marginTop: 1, display: "flex", gap: 1 }}>
-                      <Button
-                        variant="contained"
-                        color="primary"
-                        size="small"
-                        startIcon={<Reply />}
-                        onClick={() => handleReplySubmit(conversation)}
-                      >
-                        Répondre
-                      </Button>
-                      <Button
-                        variant="outlined"
-                        color="error"
-                        size="small"
-                        startIcon={<Delete />}
-                        onClick={() => handleDelete(conversation.id)}
-                      >
-                        Supprimer
-                      </Button>
+                    {/* Affichage des messages */}
+                    <Box sx={{ marginTop: 2 }}>
+                      <Typography variant="subtitle1">Messages :</Typography>
+                      {conversation.messages.map((msg) => (
+                        <Box
+                          key={msg.id}
+                          sx={{
+                            border: "1px solid #ddd",
+                            borderRadius: "8px",
+                            padding: "8px",
+                            marginBottom: "8px",
+                            backgroundColor:
+                              msg.senderId === auth.currentUser.uid
+                                ? "#dcf8c6"
+                                : "#fff",
+                          }}
+                        >
+                          <Typography variant="body2">
+                            <strong>De :</strong> {msg.senderName}
+                          </Typography>
+                          <Typography variant="body2">
+                            <strong>Message :</strong> {msg.message}
+                          </Typography>
+                          <Typography variant="caption">
+                            Envoyé le :{" "}
+                            {new Date(msg.timestamp).toLocaleString()}
+                          </Typography>
+                        </Box>
+                      ))}
                     </Box>
-                  </Box>
-                </CardContent>
-              </Card>
-            </Grid>
-          ))}
-        </Grid>
-      )}
-      <Header />
-    </Box>
+
+                    {/* Formulaire de réponse */}
+                    <Box sx={{ marginTop: 2 }}>
+                      <TextField
+                        fullWidth
+                        size="small"
+                        placeholder="Répondre..."
+                        value={reply[conversation.id] || ""}
+                        onChange={(e) =>
+                          handleReplyChange(conversation.id, e.target.value)
+                        }
+                      />
+                      <Box sx={{ marginTop: 1, display: "flex", gap: 1 }}>
+                        <Button
+                          variant="contained"
+                          color="primary"
+                          size="small"
+                          startIcon={<Reply />}
+                          onClick={() => handleReplySubmit(conversation)}
+                        >
+                          Répondre
+                        </Button>
+                        <Button
+                          variant="outlined"
+                          color="error"
+                          size="small"
+                          startIcon={<Delete />}
+                          onClick={() => handleDelete(conversation.id)}
+                        >
+                          Supprimer
+                        </Button>
+                      </Box>
+                    </Box>
+                  </CardContent>
+                </Card>
+              </Grid>
+            ))}
+          </Grid>
+        )}
+        <Header />
+      </Box>
+    </div>
   );
 }

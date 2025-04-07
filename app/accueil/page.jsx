@@ -100,7 +100,6 @@ export default function MultiActionAreaCard() {
   return (
     <Box
       sx={{
-        backgroundColor: "#6F6561",
         minHeight: "100vh",
         padding: "20px 10px",
         display: "flex",
@@ -115,7 +114,7 @@ export default function MultiActionAreaCard() {
         variant="h1"
         align="center"
         sx={{
-          color: "#FFFFFF",
+          color: "#847774",
           fontWeight: "bold",
           fontSize: { xs: "1.5rem", sm: "2rem", md: "2rem" },
           maxWidth: "90%",
@@ -129,7 +128,7 @@ export default function MultiActionAreaCard() {
         variant="h5"
         align="center"
         sx={{
-          color: "#FFFFFF",
+          color: "#847774",
           maxWidth: "85%",
           lineHeight: 1.6,
           marginBottom: 4,
