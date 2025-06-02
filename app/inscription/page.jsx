@@ -27,24 +27,16 @@ import {
 } from "firebase/storage";
 import styles from "../connexion/Connexion.module.css";
 import { useRouter } from "next/navigation";
+
 const theme = createTheme({
   palette: {
-    primary: {
-      main: "#FCFEF7", // Couleur principale avec bon contraste
-      contrastText: "#000000", // Texte foncé pour un meilleur contraste
-    },
-    secondary: {
-      main: "#72B07E", // Couleur secondaire
-      contrastText: "#FFFFFF", // Texte clair pour bon contraste
-    },
+    primary: { main: "#FCFEF7", contrastText: "#000000" },
+    secondary: { main: "#72B07E", contrastText: "#FFFFFF" },
   },
   components: {
     MuiButton: {
       styleOverrides: {
-        root: {
-          textTransform: "none", // Désactiver les majuscules par défaut
-          fontWeight: 600, // Rendre le texte plus lisible
-        },
+        root: { textTransform: "none", fontWeight: 600 },
       },
     },
   },
@@ -64,99 +56,86 @@ const MediaInscription = () => {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   const [adresse, setAdressse] = useState("");
   const [codepostal, setCodepostal] = useState("");
-  const auth = getAuth();
-  const router = useRouter();
   const [imagePreview, setImagePreview] = useState(null);
+  const [acceptedTerms, setAcceptedTerms] = useState(false); // ✅
+  const router = useRouter();
   const storage = getStorage();
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+
   const handleRegister = async (e) => {
     e.preventDefault();
 
-    // Validation des mots de passe
     if (password !== confirmPassword) {
       setError("Les mots de passe ne correspondent pas.");
       return;
     }
+
     if (!emailRegex.test(email)) {
       setError("Veuillez fournir une adresse e-mail valide.");
       return;
     }
 
-    // Validation du SIRET si "pro"
+    if (
+      password.length < 8 ||
+      !/[A-Z]/.test(password) ||
+      !/[a-z]/.test(password) ||
+      !/\d/.test(password)
+    ) {
+      setError(
+        "Mot de passe faible. Il doit contenir au moins 8 caractères, une majuscule, une minuscule et un chiffre."
+      );
+      return;
+    }
+
     if (role === "pro" && !/^\d{14}$/.test(siret)) {
       setError("Le numéro SIRET doit contenir exactement 14 chiffres.");
       return;
     }
 
-    try {
-      setIsLoading(true); // Démarre le chargement
+    if (!acceptedTerms) {
+      setError("Vous devez accepter les conditions d'utilisation.");
+      return;
+    }
 
-      // Création de l'utilisateur Firebase
+    try {
+      setIsLoading(true);
       const userCredential = await createUserWithEmailAndPassword(
         auth,
         email,
         password
       );
-
       const user = userCredential.user;
 
-      await updateProfile(user, {
-        displayName: name,
-      });
+      await updateProfile(user, { displayName: name });
 
-      // Téléchargement de l'image si elle existe
       let imageUrl = "";
       if (image) {
-        try {
-          console.log("Début de l'upload de l'image...");
-          console.log("Nom du fichier :", image.name);
-          console.log("Taille du fichier :", image.size, "bytes");
-
-          const imageRef = storageRef(
-            storage,
-            `images/${userCredential.user.uid}/${Date.now()}_${image.name}`
-          );
-          console.log("Référence de l'image créée :", imageRef);
-
-          await uploadBytes(imageRef, image);
-          console.log("Upload réussi !");
-
-          imageUrl = await getDownloadURL(imageRef);
-          console.log("URL de l'image :", imageUrl);
-        } catch (error) {
-          console.error("Erreur lors de l'upload :", error);
-          setError(
-            "Erreur lors du téléchargement de l'image : " + error.message
-          );
-          return; // On arrête l'exécution si erreur
-        }
+        const imageRef = storageRef(
+          storage,
+          `images/${user.uid}/${Date.now()}_${image.name}`
+        );
+        await uploadBytes(imageRef, image);
+        imageUrl = await getDownloadURL(imageRef);
       } else {
-        console.error("Aucune image sélectionnée !");
-        setError("Veuillez sélectionner une image avant de continuer.");
-        return; // On arrête si pas d'image sélectionnée
+        setError("Veuillez sélectionner une image.");
+        return;
       }
 
-      // Sauvegarde des données utilisateur dans Firebase Database
-      const useRef = ref(database, `users/${userCredential.user.uid}`);
+      const useRef = ref(database, `users/${user.uid}`);
       await set(useRef, {
-        adresse: adresse,
-        codepostal: codepostal,
-        email: email,
+        adresse,
+        codepostal,
+        email,
         image: imageUrl,
-        name: name,
-        role: role,
+        name,
+        role,
         siret: role === "pro" ? siret : "",
-        uid: userCredential.user.uid,
+        uid: user.uid,
+        acceptedTerms: true, // ✅ Enregistre le consentement
       });
 
-      // Envoi de l'email de vérification
-      await sendEmailVerification(userCredential.user);
-      setConfirmationMessage(
-        "Inscription réussie ! Un e-mail de vérification a été envoyé."
-      );
-      setIsDialogOpen(true);
+      await sendEmailVerification(user);
+      setConfirmationMessage("Inscription réussie ! Vérifiez votre e-mail.");
 
-      // Réinitialisation des champs
       setEmail("");
       setPassword("");
       setConfirmPassword("");
@@ -167,72 +146,49 @@ const MediaInscription = () => {
       setError(null);
       setAdressse("");
       setCodepostal("");
-      console.log("Redirection vers /connexion");
-      setTimeout(() => {
-        router.push("/connexion");
-      }, 3000);
+      setAcceptedTerms(false);
+      setTimeout(() => router.push("/connexion"), 3000);
     } catch (error) {
-      // Gestion des erreurs Firebase
       switch (error.code) {
         case "auth/email-already-in-use":
           setError("Cet e-mail est déjà utilisé.");
           break;
         case "auth/weak-password":
-          setError(
-            "Le mot de passe est trop faible. Utilisez au moins 6 caractères."
-          );
+          setError("Mot de passe trop faible.");
           break;
         default:
-          setError("Une erreur est survenue : " + error.message);
+          setError("Erreur : " + error.message);
       }
     } finally {
-      setIsLoading(false); // Fin du chargement
+      setIsLoading(false);
     }
   };
-  const handleImageChange = (e) => {
-    console.log("📂 Événement déclenché, e.target:", e.target);
-    console.log("📂 Fichiers détectés :", e.target.files);
 
+  const handleImageChange = (e) => {
     if (!e.target.files || e.target.files.length === 0) {
-      console.error("❌ Aucune image détecté !");
-      setError("Aucune image sélectionné.");
+      setError("Aucune image sélectionnée.");
       return;
     }
 
     const file = e.target.files[0];
-    console.log("✅ Fichier sélectionné :", file);
-
     const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
 
-    // Vérifier le type de fichier
     if (!allowedTypes.includes(file.type)) {
-      console.error("❌ Type de fichier non autorisé :", file.type);
       setError("Seules les images JPEG, PNG ou WebP sont acceptées.");
       return;
     }
 
-    // Vérifier la taille du fichier
     if (file.size > 5 * 1024 * 1024) {
-      console.error("❌ Taille de fichier trop grande :", file.size);
-      setError("La taille de l'image ne doit pas dépasser 5 MB.");
+      setError("Image trop grande (max 5MB).");
       return;
     }
 
-    // Si tout est valide, continuez le traitement
-    setError(""); // Effacer les erreurs précédentes
-    setImage(file); // Stocker le fichier sélectionné
+    setError("");
+    setImage(file);
 
     const reader = new FileReader();
-    reader.onload = (event) => {
-      setImagePreview(event.target.result); // Afficher l'aperçu de l'image
-      console.log("🖼️ Aperçu de l'image mis à jour !");
-    };
-
-    reader.onerror = (error) => {
-      console.error("❌ Erreur lors de la lecture du fichier :", error);
-      setError("Erreur lors de la lecture du fichier.");
-    };
-
+    reader.onload = (event) => setImagePreview(event.target.result);
+    reader.onerror = () => setError("Erreur lors de la lecture du fichier.");
     reader.readAsDataURL(file);
   };
 
@@ -240,13 +196,19 @@ const MediaInscription = () => {
     <ThemeProvider theme={theme}>
       <div className={styles.container}>
         <Image
-          component="img"
           alt="logo chien"
           width={300}
           height={300}
           src="/images/blob.png"
         />
+
         <Card sx={{ maxWidth: 600, backgroundColor: "primary.main" }}>
+          <Typography variant="h4" fontWeight={700} gutterBottom>
+            Bienvenue !
+          </Typography>
+          <Typography variant="body1" color="text.secondary">
+            Créez votre compte pour rejoindre notre communauté 🐾
+          </Typography>
           <CardContent>
             <Typography
               variant="h3"
@@ -270,123 +232,128 @@ const MediaInscription = () => {
               noValidate
               sx={{ mt: 1 }}
             >
-              <div>
+              <TextField
+                value={name}
+                required
+                fullWidth
+                label="Nom"
+                variant="standard"
+                onChange={(e) => setName(e.target.value)}
+              />
+              <TextField
+                value={adresse}
+                required
+                fullWidth
+                label="Adresse"
+                variant="standard"
+                onChange={(e) => setAdressse(e.target.value)}
+              />
+              <TextField
+                value={codepostal}
+                required
+                fullWidth
+                label="Code postal"
+                variant="standard"
+                onChange={(e) => setCodepostal(e.target.value)}
+              />
+              <TextField
+                value={email}
+                required
+                fullWidth
+                label="Adresse e-mail"
+                type="email"
+                variant="standard"
+                onChange={(e) => setEmail(e.target.value)}
+              />
+              <TextField
+                value={password}
+                required
+                fullWidth
+                label="Mot de passe"
+                type="password"
+                variant="standard"
+                onChange={(e) => setPassword(e.target.value)}
+              />
+              <TextField
+                value={confirmPassword}
+                required
+                fullWidth
+                label="Confirmer le mot de passe"
+                type="password"
+                variant="standard"
+                onChange={(e) => setConfirmPassword(e.target.value)}
+              />
+              <Select
+                value={role}
+                onChange={(e) => setRole(e.target.value)}
+                variant="standard"
+                fullWidth
+                sx={{ mt: 2 }}
+              >
+                <MenuItem value="user">Utilisateur</MenuItem>
+                <MenuItem value="pro">Professionnel</MenuItem>
+              </Select>
+              {role === "pro" && (
                 <TextField
-                  value={name}
+                  value={siret}
                   required
                   fullWidth
-                  id="displayName"
-                  label="Nom"
-                  name="nom"
-                  autoComplete="name"
+                  label="Numéro SIRET"
                   variant="standard"
-                  onChange={(e) => setName(e.target.value)}
-                />
-                <TextField
-                  value={adresse}
-                  required
-                  fullWidth
-                  id="adresse"
-                  label="Adresse"
-                  name="adresse"
-                  autoComplete="adresse"
-                  variant="standard"
-                  onChange={(e) => setAdressse(e.target.value)}
-                />
-                <TextField
-                  value={codepostal}
-                  required
-                  fullWidth
-                  id="codepostal"
-                  label="Code postal"
-                  name="code postal"
-                  autoComplete="code postal"
-                  variant="standard"
-                  onChange={(e) => setCodepostal(e.target.value)}
-                />
-                <TextField
-                  value={email}
-                  required
-                  fullWidth
-                  id="email"
-                  label="entrez un adresse mail paypal pour les profesionel "
-                  name="email"
-                  autoComplete="email"
-                  variant="standard"
-                  onBlur={(e) => {
-                    if (!emailRegex.test(e.target.value)) {
-                      setError("Adresse e-mail invalide.");
-                    } else {
-                      setError(null);
-                    }
-                  }}
-                  onChange={(e) => setEmail(e.target.value)}
-                />
-                <TextField
-                  value={password}
-                  required
-                  fullWidth
-                  id="password"
-                  label="Mot de passe"
-                  name="password"
-                  type="password"
-                  autoComplete="current-password"
-                  variant="standard"
-                  onChange={(e) => setPassword(e.target.value)}
-                />
-                <TextField
-                  value={confirmPassword}
-                  required
-                  fullWidth
-                  id="confirmPassword"
-                  label="Confirmez le mot de passe"
-                  name="confirmPassword"
-                  type="password"
-                  autoComplete="current-password"
-                  variant="standard"
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                />
-                <Select
-                  value={role}
-                  onChange={(e) => setRole(e.target.value)}
-                  variant="standard"
-                  fullWidth
+                  onChange={(e) => setSiret(e.target.value)}
                   sx={{ mt: 2 }}
-                >
-                  <MenuItem value="user">Utilisateur</MenuItem>
-                  <MenuItem value="pro">Professionnel</MenuItem>
-                </Select>
-                {role === "pro" && (
-                  <TextField
-                    value={siret}
-                    required
-                    fullWidth
-                    id="siret"
-                    label="Numéro SIRET"
-                    name="siret"
-                    autoComplete="siret"
-                    variant="standard"
-                    onChange={(e) => setSiret(e.target.value)}
-                    sx={{ mt: 2 }}
-                  />
-                )}
-
-                <input
-                  type="file"
-                  accept="image/jpeg, image/png, image/webp"
-                  onChange={handleImageChange}
                 />
-
-                <Button
-                  type="submit"
-                  fullWidth
-                  variant="contained"
-                  disabled={isLoading}
-                  sx={{ mt: 2, mb: 1, backgroundColor: "secondary.main" }}
+              )}
+              <input
+                type="file"
+                accept="image/jpeg, image/png, image/webp"
+                onChange={handleImageChange}
+                style={{ marginTop: "1rem" }}
+              />
+              {imagePreview && (
+                <Box mt={2}>
+                  <Typography variant="body2">Aperçu de l'image :</Typography>
+                  <img
+                    src={imagePreview}
+                    alt="Aperçu"
+                    style={{
+                      width: "100px",
+                      height: "100px",
+                      borderRadius: "8px",
+                    }}
+                  />
+                </Box>
+              )}
+              <Box display="flex" alignItems="center" sx={{ mt: 2 }}>
+                <input
+                  type="checkbox"
+                  checked={acceptedTerms}
+                  onChange={(e) => setAcceptedTerms(e.target.checked)}
+                  id="terms"
+                />
+                <label
+                  htmlFor="terms"
+                  style={{ marginLeft: "8px", fontSize: "14px" }}
                 >
-                  {isLoading ? "Chargement..." : "S'inscrire"}
-                </Button>
-              </div>
+                  J'accepte les{" "}
+                  <a
+                    href="/conditions"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    conditions d'utilisation
+                  </a>
+                </label>
+              </Box>
+              <Button
+                type="submit"
+                fullWidth
+                variant="contained"
+                disabled={isLoading}
+                sx={{ mt: 2, mb: 1, backgroundColor: "secondary.main" }}
+              >
+                {isLoading ? "Chargement..." : "S'inscrire"}
+              </Button>
             </Box>
           </CardActions>
         </Card>

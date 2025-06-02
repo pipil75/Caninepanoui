@@ -96,6 +96,20 @@ export default function UserDetailPage() {
         setConfirmationMessage("Veuillez fournir une date et une heure.");
         return;
       }
+
+      // Vérification que la date/heure est dans le futur
+      const selectedDateTime = new Date(`${date}T${time}`);
+      const now = new Date();
+
+      if (selectedDateTime < now) {
+        setConfirmationMessage(
+          <span style={{ color: "red" }}>
+            Vous ne pouvez pas réserver une date passée.
+          </span>
+        );
+        return;
+      }
+
       // Référence aux rendez-vous existants de l'utilisateur
       const userAppointmentsRef = ref(
         database,
@@ -105,12 +119,8 @@ export default function UserDetailPage() {
       // Récupération des rendez-vous existants
       const userAppointmentsSnapshot = await get(userAppointmentsRef);
 
-      // Vérifie si des rendez-vous existent
       if (userAppointmentsSnapshot.exists()) {
         const existingAppointments = userAppointmentsSnapshot.val();
-
-        // Debugging pour vérifier les données
-        console.log("Rendez-vous existants :", existingAppointments);
 
         const isConflict = Object.values(existingAppointments).some(
           (appointment) =>
@@ -125,30 +135,25 @@ export default function UserDetailPage() {
           );
           return;
         }
-      } else {
-        console.log("Aucun rendez-vous existant trouvé pour cet utilisateur.");
       }
 
       const appointmentData = {
         date: date,
         time: time,
         professionalId: id,
-
         userId: currentUser.uid,
         userName: currentUser.displayName || "Utilisateur Anonyme",
         userEmail: currentUser.email,
         proName: professional?.name || "Professionnel Anonyme",
-        proEmail: user && user.email ? user.email : "",
+        proEmail: user?.email || "",
       };
 
-      // Enregistrer le rendez-vous sous l'utilisateur
       const userAppointmentRef = ref(
         database,
         `users/${currentUser.uid}/appointments`
       );
       await push(userAppointmentRef, appointmentData);
 
-      // Enregistrer le rendez-vous sous le professionnel
       const professionalAppointmentRef = ref(
         database,
         `users/${id}/appointments`
@@ -159,10 +164,7 @@ export default function UserDetailPage() {
       setDate("");
       setTime("");
     } catch (error) {
-      console.error(
-        "Erreur lors de l'enregistrement des données :",
-        error.message
-      );
+      console.error("Erreur lors de l'enregistrement des données :", error);
       setConfirmationMessage("Erreur lors de l'enregistrement des données.");
     }
   };

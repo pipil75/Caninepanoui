@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-
+import Header from "../header";
 const About = () => {
   return (
     <div style={styles.container}>
@@ -38,7 +38,7 @@ const About = () => {
         </ul>
       </main>
       <footer style={styles.footer}>
-        <p>© 2024 Canin Epanoui. Tous droits réservés.</p>
+        <Header />
       </footer>
     </div>
   );

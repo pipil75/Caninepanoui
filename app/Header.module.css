@@ -18,9 +18,7 @@
   list-style: none;
   padding: 0;
   margin: 0;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+
   flex-wrap: wrap; /* Permet aux éléments de se réorganiser sur de petits écrans */
 }
 

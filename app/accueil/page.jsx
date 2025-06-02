@@ -20,88 +20,68 @@ import {
   onAuthStateChanged,
   setPersistence,
   browserLocalPersistence,
-} from "firebase/auth"; // Importer l'authentification Firebase
+} from "firebase/auth";
 import CookieAccepter from "../component/cookie/page";
 import Header from "../header";
+
 export default function MultiActionAreaCard() {
-  const [loading, setLoading] = useState(true); // Pour le chargement initial
-  const [users, setUsers] = useState([]); // Pour stocker les utilisateurs
-  const [authLoading, setAuthLoading] = useState(true); // Pour vérifier l'état de l'authentification
+  const [loading, setLoading] = useState(true);
+  const [users, setUsers] = useState([]);
+  const [authLoading, setAuthLoading] = useState(true);
   const router = useRouter();
   const auth = getAuth();
 
-  // Vérification de l'authentification de l'utilisateur
   useEffect(() => {
-    // Configurer la persistance de session
     setPersistence(auth, browserLocalPersistence)
       .then(() => {
-        // Une fois la persistance configurée, surveiller l'état de l'utilisateur
         const unsubscribe = onAuthStateChanged(auth, (user) => {
           if (!user) {
-            // Si l'utilisateur n'est pas connecté, redirection vers la page d'accueil
             router.push("/");
           } else {
-            // L'utilisateur est connecté, arrêter le chargement de l'auth
             setAuthLoading(false);
           }
         });
-
-        return () => unsubscribe(); // Nettoyer lors du démontage
+        return () => unsubscribe();
       })
       .catch((error) => {
-        console.error(
-          "Erreur lors de la configuration de la persistance :",
-          error
-        );
+        console.error("Erreur de persistance :", error);
       });
   }, [auth, router]);
 
-  // Fonction pour récupérer les utilisateurs depuis Firebase
   useEffect(() => {
     if (!authLoading) {
-      // Si l'utilisateur est authentifié, on récupère les utilisateurs
       const fetchUsers = async () => {
         const usersRef = ref(database, "users");
         const snapshot = await get(usersRef);
         if (snapshot.exists()) {
           const data = snapshot.val();
           const proUsers = Object.entries(data)
-            .map(([id, user]) => ({
-              ...user, // Conserver les autres propriétés de l'utilisateur
-              id,
-            }))
-            .filter((user) => user.role === "pro"); // Filtrer les utilisateurs pros
+            .map(([id, user]) => ({ ...user, id }))
+            .filter((user) => user.role === "pro");
           setUsers(proUsers);
         } else {
-          setUsers([]); // Si aucune donnée n'est trouvée
+          setUsers([]);
         }
-        setLoading(false); // Fin du chargement des données
+        setLoading(false);
       };
-
       fetchUsers();
     }
-  }, [authLoading]); // Exécuter uniquement après la vérification de l'authentification
+  }, [authLoading]);
 
-  // Gestion du chargement de l'authentification
-  if (authLoading) {
-    return <p>Vérification de l'authentification...</p>;
-  }
+  if (authLoading) return <p>Chargement de l'authentification...</p>;
+  if (loading) return <p>Chargement des éducateurs...</p>;
 
-  // Gestion du chargement des utilisateurs
-  if (loading) {
-    return <p>Chargement des données...</p>;
-  }
-
-  // Fonction pour afficher le détail d'un utilisateur pro
   const handleOpenUserDetail = (userId) => {
-    router.push(`/profilprodetail/${userId}`); // Passer l'ID de l'utilisateur dans l'URL
+    router.push(`/profilprodetail/${userId}`);
   };
 
   return (
     <Box
       sx={{
+        backgroundColor: "#FCFEF7",
         minHeight: "100vh",
-        padding: "20px 10px",
+        paddingTop: "80px",
+        paddingBottom: "60px",
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
@@ -110,106 +90,103 @@ export default function MultiActionAreaCard() {
       <ResponsiveAppBar />
       <CookieAccepter />
 
-      <Typography
-        variant="h1"
-        align="center"
-        sx={{
-          color: "#847774",
-          fontWeight: "bold",
-          fontSize: { xs: "1.5rem", sm: "2rem", md: "2rem" },
-          maxWidth: "90%",
-          marginBottom: 3,
-          lineHeight: 1.5,
-        }}
-      >
-        Bienvenue sur notre plateforme !
-      </Typography>
-      <Typography
-        variant="h5"
-        align="center"
-        sx={{
-          color: "#847774",
-          maxWidth: "85%",
-          lineHeight: 1.6,
-          marginBottom: 4,
-          fontSize: { xs: "1rem", sm: "1.2rem", md: "1.4rem" },
-        }}
-      >
-        Ici, vous trouverez une liste complète des éducateurs disponibles pour
-        vous accompagner dans vos besoins. Que ce soit pour du soutien, des
-        conseils ou un suivi personnalisé, chaque éducateur propose des
-        compétences spécifiques pour vous aider à atteindre vos objectifs.
-        N'hésitez pas à explorer les profils pour découvrir leurs domaines
-        d'expertise et à les contacter pour toute question !
-      </Typography>
+      <Box sx={{ maxWidth: "1000px", textAlign: "center", px: 2, mb: 5 }}>
+        <Typography
+          variant="h3"
+          sx={{
+            fontWeight: "bold",
+            color: "#847774",
+            mb: 2,
+            fontSize: { xs: "1.8rem", md: "2.2rem" },
+          }}
+        >
+          Découvrez nos éducateurs canins certifiés
+        </Typography>
+        <Typography
+          variant="body1"
+          sx={{
+            color: "#6F6561",
+            fontSize: { xs: "1rem", md: "1.1rem" },
+          }}
+        >
+          Prenez le temps d’explorer les profils professionnels adaptés à vos
+          besoins. Chaque éducateur est qualifié pour vous accompagner avec
+          bienveillance.
+        </Typography>
+      </Box>
+
       <Grid
         container
-        spacing={3}
+        spacing={4}
         justifyContent="center"
-        sx={{ width: "100%", maxWidth: "1200px" }}
+        sx={{ maxWidth: "1200px", px: 3 }}
       >
         {users.length > 0 ? (
-          users.map((user, index) => (
-            <Grid item xs={12} sm={6} md={4} key={index}>
+          users.map((user) => (
+            <Grid item xs={12} sm={6} md={4} key={user.id}>
               <Card
                 sx={{
-                  backgroundColor: "#FCFEF7",
-                  borderRadius: "15px",
-                  boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.1)",
-                  padding: "15px",
+                  backgroundColor: "#fff",
+                  borderRadius: "20px",
+                  boxShadow: "0 8px 24px rgba(0,0,0,0.1)",
+                  transition: "transform 0.3s ease",
+                  "&:hover": { transform: "translateY(-5px)" },
                   textAlign: "center",
-                  marginBottom: "150px",
-                  cursor: "pointer",
+                  p: 2,
                 }}
               >
+                <Box
+                  component="img"
+                  src={user.image || "https://via.placeholder.com/150"}
+                  alt={user.name}
+                  sx={{
+                    width: "100px",
+                    height: "100px",
+                    borderRadius: "50%",
+                    objectFit: "cover",
+                    mx: "auto",
+                    mb: 2,
+                  }}
+                />
                 <CardContent>
-                  <Typography
-                    variant="h6"
-                    fontWeight="bold"
-                    sx={{ color: "#333" }}
-                  >
+                  <Typography variant="h6" fontWeight="bold">
                     {user.name}
                   </Typography>
-                  <Typography variant="body2" sx={{ color: "#555" }}>
+                  <Typography variant="body2" sx={{ color: "#666" }}>
                     {user.email}
                   </Typography>
-                  <Typography variant="body2" sx={{ color: "#555" }}>
+                  <Typography variant="body2" sx={{ color: "#666" }}>
                     {user.codepostal}
                   </Typography>
-                  <Box
-                    component="img"
-                    src={user.image || "https://via.placeholder.com/150"}
-                    alt={user.name}
-                    sx={{
-                      width: "120px",
-                      height: "120px",
-                      margin: "15px auto",
-                      borderRadius: "50%",
-                    }}
-                  />
                 </CardContent>
                 <CardActions sx={{ justifyContent: "center" }}>
                   <Button
-                    variant="contained"
-                    sx={{ backgroundColor: "#847774", color: "#fff" }}
                     onClick={() => handleOpenUserDetail(user.uid)}
+                    variant="contained"
+                    sx={{
+                      backgroundColor: "#847774",
+                      color: "#fff",
+                      borderRadius: "20px",
+                      px: 3,
+                      ":hover": { backgroundColor: "#6f6561" },
+                    }}
                   >
-                    Détail
+                    Voir le profil
                   </Button>
                 </CardActions>
               </Card>
             </Grid>
           ))
         ) : (
-          <Typography
-            align="center"
-            sx={{ color: "#FFFFFF", fontSize: "1.2rem" }}
-          >
-            Aucun utilisateur pro trouvé.
+          <Typography variant="body1" color="textSecondary">
+            Aucun éducateur disponible pour le moment.
           </Typography>
         )}
       </Grid>
-      <Header />
+
+      <Box sx={{ mt: 10, width: "100%" }}>
+        <Header />
+      </Box>
     </Box>
   );
 }
