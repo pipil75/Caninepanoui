@@ -1,24 +1,27 @@
 "use client";
 import * as React from "react";
-import Card from "@mui/material/Card";
-import CardActions from "@mui/material/CardActions";
-import CardContent from "@mui/material/CardContent";
-import Button from "@mui/material/Button";
-import Typography from "@mui/material/Typography";
-import Box from "@mui/material/Box";
-import TextField from "@mui/material/TextField";
-import { createTheme, ThemeProvider } from "@mui/material";
+import {
+  Card,
+  CardActions,
+  CardContent,
+  Button,
+  Typography,
+  Box,
+  TextField,
+  Select,
+  MenuItem,
+  createTheme,
+  ThemeProvider,
+} from "@mui/material";
 import Image from "next/image";
 import { useState } from "react";
 import {
-  getAuth,
   createUserWithEmailAndPassword,
   sendEmailVerification,
   updateProfile,
 } from "firebase/auth";
 import { ref, set } from "firebase/database";
-import { auth, database, storage } from "../../lib/firebase";
-import { Select, MenuItem } from "@mui/material";
+import { auth, database } from "../../lib/firebase";
 import {
   ref as storageRef,
   uploadBytes,
@@ -27,6 +30,7 @@ import {
 } from "firebase/storage";
 import styles from "../connexion/Connexion.module.css";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 const theme = createTheme({
   palette: {
@@ -50,14 +54,14 @@ const MediaInscription = () => {
   const [name, setName] = useState("");
   const [role, setRole] = useState("user");
   const [siret, setSiret] = useState("");
-  const [image, setImage] = useState("");
+  const [image, setImage] = useState(null);
   const [confirmationMessage, setConfirmationMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   const [adresse, setAdressse] = useState("");
   const [codepostal, setCodepostal] = useState("");
   const [imagePreview, setImagePreview] = useState(null);
-  const [acceptedTerms, setAcceptedTerms] = useState(false); // ✅
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
   const router = useRouter();
   const storage = getStorage();
 
@@ -117,6 +121,7 @@ const MediaInscription = () => {
         imageUrl = await getDownloadURL(imageRef);
       } else {
         setError("Veuillez sélectionner une image.");
+        setIsLoading(false);
         return;
       }
 
@@ -130,12 +135,13 @@ const MediaInscription = () => {
         role,
         siret: role === "pro" ? siret : "",
         uid: user.uid,
-        acceptedTerms: true, // ✅ Enregistre le consentement
+        acceptedTerms: true,
       });
 
       await sendEmailVerification(user);
       setConfirmationMessage("Inscription réussie ! Vérifiez votre e-mail.");
 
+      // Réinitialise le formulaire
       setEmail("");
       setPassword("");
       setConfirmPassword("");
@@ -147,6 +153,8 @@ const MediaInscription = () => {
       setAdressse("");
       setCodepostal("");
       setAcceptedTerms(false);
+      setImagePreview(null);
+
       setTimeout(() => router.push("/connexion"), 3000);
     } catch (error) {
       switch (error.code) {
@@ -195,44 +203,63 @@ const MediaInscription = () => {
   return (
     <ThemeProvider theme={theme}>
       <div className={styles.container}>
-        <Image
-          alt="logo chien"
-          width={300}
-          height={300}
-          src="/images/blob.png"
-        />
+        <Link href="/">
+          <Image
+            alt="logo chien"
+            width={350}
+            height={350}
+            src="/images/blob.png"
+            style={{ marginBottom: "1rem" }}
+          />
+        </Link>
+        <Card
+          sx={{
+            maxWidth: 600,
+            backgroundColor: "#ffffff",
+            boxShadow: 3,
+            borderRadius: 2,
+            p: 5,
+          }}
+        >
+          <Typography variant="h4" fontWeight={700} align="center" gutterBottom>
+            Créez votre compte
+          </Typography>
+          <Typography
+            variant="body1"
+            align="center"
+            color="text.secondary"
+            sx={{ mb: 3 }}
+          >
+            Rejoignez notre communauté 🐾
+          </Typography>
 
-        <Card sx={{ maxWidth: 600, backgroundColor: "primary.main" }}>
-          <Typography variant="h4" fontWeight={700} gutterBottom>
-            Bienvenue !
-          </Typography>
-          <Typography variant="body1" color="text.secondary">
-            Créez votre compte pour rejoindre notre communauté 🐾
-          </Typography>
-          <CardContent>
-            <Typography
-              variant="h3"
-              sx={{ color: theme.palette.secondary.main }}
-            >
-              Inscription
+          {error && (
+            <Typography sx={{ color: "error.main", mb: 2 }}>{error}</Typography>
+          )}
+          {confirmationMessage && (
+            <Typography sx={{ color: "success.main", mb: 2 }}>
+              {confirmationMessage}
             </Typography>
-            {error && (
-              <Typography sx={{ color: "error.main" }}>{error}</Typography>
-            )}
-            {confirmationMessage && (
-              <Typography sx={{ color: "success.main" }}>
-                {confirmationMessage}
-              </Typography>
-            )}
-          </CardContent>
+          )}
+
           <CardActions>
             <Box
               component="form"
               onSubmit={handleRegister}
               noValidate
-              sx={{ mt: 1 }}
+              sx={{
+                width: "100%",
+                maxWidth: 420,
+                margin: "0 auto",
+                padding: 2,
+              }}
             >
+              {/* Section Infos personnelles */}
+              <Typography variant="h6" sx={{ mt: 3, mb: 1 }}>
+                Informations personnelles
+              </Typography>
               <TextField
+                sx={{ mt: 2, mb: 2 }}
                 value={name}
                 required
                 fullWidth
@@ -241,6 +268,7 @@ const MediaInscription = () => {
                 onChange={(e) => setName(e.target.value)}
               />
               <TextField
+                sx={{ mb: 2 }}
                 value={adresse}
                 required
                 fullWidth
@@ -249,6 +277,7 @@ const MediaInscription = () => {
                 onChange={(e) => setAdressse(e.target.value)}
               />
               <TextField
+                sx={{ mb: 2 }}
                 value={codepostal}
                 required
                 fullWidth
@@ -256,7 +285,13 @@ const MediaInscription = () => {
                 variant="standard"
                 onChange={(e) => setCodepostal(e.target.value)}
               />
+
+              {/* Section Infos connexion */}
+              <Typography variant="h6" sx={{ mt: 4, mb: 1 }}>
+                Informations de connexion
+              </Typography>
               <TextField
+                sx={{ mb: 2 }}
                 value={email}
                 required
                 fullWidth
@@ -266,6 +301,7 @@ const MediaInscription = () => {
                 onChange={(e) => setEmail(e.target.value)}
               />
               <TextField
+                sx={{ mb: 2 }}
                 value={password}
                 required
                 fullWidth
@@ -275,6 +311,7 @@ const MediaInscription = () => {
                 onChange={(e) => setPassword(e.target.value)}
               />
               <TextField
+                sx={{ mb: 2 }}
                 value={confirmPassword}
                 required
                 fullWidth
@@ -284,75 +321,81 @@ const MediaInscription = () => {
                 onChange={(e) => setConfirmPassword(e.target.value)}
               />
               <Select
+                sx={{ mb: 2 }}
                 value={role}
                 onChange={(e) => setRole(e.target.value)}
                 variant="standard"
                 fullWidth
-                sx={{ mt: 2 }}
               >
                 <MenuItem value="user">Utilisateur</MenuItem>
                 <MenuItem value="pro">Professionnel</MenuItem>
               </Select>
               {role === "pro" && (
                 <TextField
+                  sx={{ mb: 2 }}
                   value={siret}
                   required
                   fullWidth
                   label="Numéro SIRET"
                   variant="standard"
                   onChange={(e) => setSiret(e.target.value)}
-                  sx={{ mt: 2 }}
                 />
               )}
-              <input
-                type="file"
-                accept="image/jpeg, image/png, image/webp"
-                onChange={handleImageChange}
-                style={{ marginTop: "1rem" }}
-              />
-              {imagePreview && (
-                <Box mt={2}>
-                  <Typography variant="body2">Aperçu de l'image :</Typography>
-                  <img
-                    src={imagePreview}
-                    alt="Aperçu"
-                    style={{
-                      width: "100px",
-                      height: "100px",
-                      borderRadius: "8px",
-                    }}
-                  />
-                </Box>
-              )}
-              <Box display="flex" alignItems="center" sx={{ mt: 2 }}>
+
+              {/* Image upload */}
+              <Box sx={{ mt: 3, mb: 2 }}>
+                <input
+                  type="file"
+                  accept="image/jpeg, image/png, image/webp"
+                  onChange={handleImageChange}
+                />
+                {imagePreview && (
+                  <Box mt={2}>
+                    <Typography variant="body2">Aperçu de l'image :</Typography>
+                    <img
+                      src={imagePreview}
+                      alt="Aperçu"
+                      style={{
+                        width: "100px",
+                        height: "100px",
+                        borderRadius: "8px",
+                      }}
+                    />
+                  </Box>
+                )}
+              </Box>
+
+              {/* Acceptation des conditions */}
+              <Box
+                display="flex"
+                alignItems="center"
+                sx={{ mt: 2, mb: 3, fontSize: "14px" }}
+              >
                 <input
                   type="checkbox"
                   checked={acceptedTerms}
                   onChange={(e) => setAcceptedTerms(e.target.checked)}
                   id="terms"
+                  style={{ marginRight: 8 }}
                 />
-                <label
-                  htmlFor="terms"
-                  style={{ marginLeft: "8px", fontSize: "14px" }}
-                >
+                <label htmlFor="terms">
                   J'accepte les{" "}
-                  <a
-                    href="/conditions"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    conditions d'utilisation
-                  </a>
+                  <Link href="/conditions" legacyBehavior>
+                    <a style={{ color: "#72B07E" }}>conditions d'utilisation</a>
+                  </Link>
+                  .
                 </label>
               </Box>
+
               <Button
                 type="submit"
-                fullWidth
                 variant="contained"
+                color="secondary"
+                fullWidth
                 disabled={isLoading}
-                sx={{ mt: 2, mb: 1, backgroundColor: "secondary.main" }}
+                sx={{ mt: 1 }}
               >
-                {isLoading ? "Chargement..." : "S'inscrire"}
+                {isLoading ? "Inscription en cours..." : "S'inscrire"}
               </Button>
             </Box>
           </CardActions>

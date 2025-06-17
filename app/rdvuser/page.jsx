@@ -2,16 +2,26 @@
 import React, { useEffect, useState } from "react";
 import { ref, get, remove } from "firebase/database";
 import { auth, database } from "../../lib/firebase";
-import { Card, CardContent, Typography, Button } from "@mui/material";
+import {
+  Card,
+  CardContent,
+  Typography,
+  Button,
+  List,
+  ListItem,
+  Avatar,
+} from "@mui/material";
 import { useRouter } from "next/navigation";
 import ResponsiveAppBar from "../navbar";
+import { Bolt } from "@mui/icons-material";
+
 const UserAppointments = () => {
   const [appointments, setAppointments] = useState([]);
   const [userId, setUserId] = useState(null);
   const router = useRouter();
 
   useEffect(() => {
-    // Vérifier si l'utilisateur est bien connecté
+    // Listen for auth state changes
     const unsubscribe = auth.onAuthStateChanged((user) => {
       if (user) {
         setUserId(user.uid);
@@ -35,6 +45,8 @@ const UserAppointments = () => {
               ...data,
             }))
           );
+        } else {
+          setAppointments([]);
         }
       });
     }
@@ -51,7 +63,7 @@ const UserAppointments = () => {
         ref(database, `users/${userId}/appointments/${appointmentId}`)
       );
 
-      // Recharger la liste des rendez-vous après suppression
+      // Refresh the appointments list
       const updatedSnapshot = await get(
         ref(database, `users/${userId}/appointments`)
       );
@@ -75,34 +87,93 @@ const UserAppointments = () => {
 
   return (
     <div style={{ padding: "20px" }}>
-      <ResponsiveAppBar />
-      <h2>Mes Rendez-vous</h2>
-      {appointments.length > 0 ? (
-        appointments.map((appointment) => (
-          <Card
-            key={appointment.id}
-            style={{ marginBottom: "15px", padding: "10px" }}
-          >
-            <CardContent>
-              <Typography variant="h6">{appointment.title}</Typography>
-              <Typography variant="body1">Date: {appointment.date}</Typography>
-              <Typography variant="body2">Heure: {appointment.time}</Typography>
-              <Typography variant="body2">
-                Non du Professionel: {appointment.proName}
-              </Typography>
-              <Button
-                variant="contained"
-                color="secondary"
-                onClick={() => handleDeleteAppointment(appointment.id)}
-                style={{ marginTop: "10px" }}
-              >
-                Supprimer
-              </Button>
-            </CardContent>
-          </Card>
-        ))
+      <Typography
+        variant="h2"
+        sx={{
+          color: "#6F6561",
+          fontSize: { xs: "1rem", md: "1.1rem" },
+          fontWeight: "bold",
+        }}
+      >
+        {" "}
+        Mes Rendez-vous
+      </Typography>
+
+      {appointments.length === 0 ? (
+        <Typography variant="h6" color="textSecondary">
+          Aucun rendez-vous à venir.
+        </Typography>
       ) : (
-        <p>Aucun rendez-vous trouvé.</p>
+        <List>
+          {appointments.map((appointment) => (
+            <ListItem
+              key={appointment.id}
+              sx={{
+                display: "flex",
+                justifyContent: "flex-start", // Align left by default
+                "@media (max-width: 600px)": {
+                  justifyContent: "center", // Center on mobile
+                },
+              }}
+            >
+              <Card
+                sx={{
+                  width: "100%",
+                  maxWidth: 400,
+                  mb: 2,
+                  display: "flex",
+                  alignItems: "center",
+                  padding: 2,
+                  flexWrap: "wrap",
+                  "@media (max-width: 600px)": {
+                    flexDirection: "column",
+                    alignItems: "center",
+                    textAlign: "center",
+                  },
+                }}
+              >
+                <Avatar
+                  src={appointment.proImage || "/default-profile.png"}
+                  alt="User Profile"
+                  sx={{
+                    width: 60,
+                    height: 60,
+                    marginRight: 2,
+                    "@media (max-width: 600px)": {
+                      width: 50,
+                      height: 50,
+                      marginBottom: 1,
+                    },
+                  }}
+                />
+                <CardContent sx={{ flex: 1, padding: "8px 0" }}>
+                  <Typography variant="body1">
+                    Email: {appointment.proEmail}
+                  </Typography>
+                  <Typography variant="body1">
+                    Date: {appointment.date}
+                  </Typography>
+                  <Typography variant="body1">
+                    Heure: {appointment.time}
+                  </Typography>
+                </CardContent>
+                <Button
+                  variant="contained"
+                  color="error"
+                  onClick={() => handleDeleteAppointment(appointment.id)}
+                  sx={{
+                    "@media (max-width: 600px)": {
+                      width: "100%",
+                      marginTop: 1,
+                    },
+                  }}
+                >
+                  Supprimer
+                </Button>
+              </Card>
+            </ListItem>
+          ))}
+        </List>
       )}
     </div>
   );

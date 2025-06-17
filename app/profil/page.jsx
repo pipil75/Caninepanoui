@@ -240,7 +240,9 @@ export default function Cardprofil() {
           </CardActions>
         </Card>
       </Box>
-      <Header />
+      <Box sx={{ width: "100%", mt: 4 }}>
+        <Header />
+      </Box>
     </ThemeProvider>
   );
 }

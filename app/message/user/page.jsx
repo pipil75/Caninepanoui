@@ -244,7 +244,9 @@ export default function UserMessages() {
             ))}
           </Grid>
         )}
-        <Header />
+        <Box sx={{ width: "100%", mt: 4 }}>
+          <Header />
+        </Box>
       </Box>
     </div>
   );

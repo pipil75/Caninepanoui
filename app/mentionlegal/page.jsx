@@ -2,6 +2,7 @@
 
 import React from "react";
 import Header from "../header";
+
 const MentionsLegales = () => {
   return (
     <div style={styles.container}>
@@ -10,11 +11,37 @@ const MentionsLegales = () => {
       </header>
 
       <section style={styles.section}>
-        <h2>Mentions Légales</h2>
+        <h2>Éditeur du site</h2>
         <p>
-          Ce site est édité par : <strong>Canin Epanoui</strong> <br />
+          <strong>Canin Épanoui</strong>
           <br />
-          Email : contact@canin-epanoui.fr <br />
+          Auto-entrepreneur – Jean Dupont
+          <br />
+          10 rue des Lilas, 75000 Paris
+          <br />
+          SIRET : 123 456 789 00012
+          <br />
+          Responsable de la publication : Jean Dupont
+          <br />
+          Email :{" "}
+          <a href="mailto:contact@canin-epanoui.fr" style={styles.link}>
+            contact@canin-epanoui.fr
+          </a>
+        </p>
+      </section>
+
+      <section style={styles.section}>
+        <h2>Hébergement</h2>
+        <p>
+          Le site est hébergé par :<br />
+          Vercel Inc.
+          <br />
+          340 S Lemon Ave #4133, Walnut, CA 91789
+          <br />
+          Email :{" "}
+          <a href="mailto:support@vercel.com" style={styles.link}>
+            support@vercel.com
+          </a>
         </p>
       </section>
 
@@ -22,23 +49,16 @@ const MentionsLegales = () => {
         <h2>Politique de Confidentialité et Traitement des Données</h2>
         <p>
           Nous nous engageons à protéger vos données personnelles conformément
-          au
-          <strong>
-            RGPD (Règlement Général sur la Protection des Données)
-          </strong>
-          . Toutes les données collectées sont utilisées exclusivement pour les
-          finalités prévues et sont sécurisées.
+          au <strong>RGPD</strong>. Toutes les données collectées sont utilisées
+          exclusivement pour les finalités prévues et sont sécurisées.
         </p>
         <p>
           Vous disposez d'un droit d'accès, de rectification et de suppression
           de vos données personnelles. Pour toute demande, veuillez contacter
-          notre
-          <strong>Responsable de la Protection des Données (DPO)</strong> à
-          l'adresse suivante :
+          notre DPO à l'adresse suivante :<br />
           <a href="mailto:dpo@canin-epanoui.fr" style={styles.link}>
             dpo@canin-epanoui.fr
           </a>
-          .
         </p>
       </section>
 
@@ -55,6 +75,25 @@ const MentionsLegales = () => {
           ouvertes ou commerciales correspondantes.
         </p>
       </section>
+
+      <section style={styles.section}>
+        <h2>Paiement et Responsabilité</h2>
+        <p>
+          Canin Épanoui agit uniquement en tant qu’intermédiaire entre les
+          utilisateurs et les prestataires de services canins.
+          <br />
+          <br />
+          Les paiements sont effectués via la plateforme sécurisée{" "}
+          <strong>PayPal</strong>. En aucun cas Canin Épanoui ne stocke ni ne
+          gère les informations bancaires des utilisateurs.
+          <br />
+          <br />
+          Canin Épanoui ne pourra être tenu responsable d’éventuels litiges liés
+          aux prestations ou aux paiements, ceux-ci relevant de la
+          responsabilité des parties concernées.
+        </p>
+      </section>
+
       <footer style={styles.footer}>
         <Header />
       </footer>

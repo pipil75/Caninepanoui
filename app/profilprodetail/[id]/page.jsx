@@ -301,8 +301,8 @@ export default function UserDetailPage() {
         >
           <CardMedia
             component="img"
-            height="300"
-            image={user.image || "https://via.placeholder.com/150"} // Remplacez par le chemin de votre image
+            height="100"
+            image={user.image || "https://via.placeholder.com/100"} // Remplacez par le chemin de votre image
             alt="Professional"
           />
           <div className={styles.cardcontent}>
@@ -391,7 +391,7 @@ export default function UserDetailPage() {
                     type="submit"
                     fullWidth
                     variant="contained"
-                    sx={{ backgroundColor: "secondary.main" }}
+                    sx={{ backgroundColor: "green" }}
                   >
                     Enregistrer
                   </Button>

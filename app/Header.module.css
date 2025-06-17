@@ -1,72 +1,102 @@
-/* Header Styles */
+/* Header.module.css */
+/* Header.module.css (ou dans n'importe quel autre fichier CSS chargé globalement) */
+
+.container {
+  font-family: "Arial", sans-serif;
+  line-height: 1.6;
+  margin: 0;
+  padding: 0;
+  color: #333;
+  background-color: #f9f9f9;
+}
+
 .header {
-  background-color: #847774; /* Couleur de fond */
-  /* Couleur de fond */
+  background-color: #6c635e; /* Marron chaud */
+  color: white;
+  padding: 10px 0;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  min-height: fit-content;
+  margin-top: 20px;
+}
+
+.navContainer {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
   display: flex;
   flex-direction: column;
-  position: fixed; /* Fixe le header en bas */
-  left: 0;
-  bottom: 0;
-  width: 100%; /* Occupe toute la largeur de l'écran */
-  z-index: 1000;
-  box-sizing: border-box; /* Assure que padding ne fait pas déborder le contenu */
-  overflow: hidden; /* Empêche le texte de dépasser */ /* Assure que le header est au-dessus des autres éléments */
+  align-items: center;
+  justify-content: center;
+  text-align: center;
 }
 
-/* Navigation List */
+@media (min-width: 768px) {
+  .navContainer {
+    flex-direction: column;
+  }
+}
+
 .navList {
-  list-style: none;
-  padding: 0;
+  display: flex;
+  flex-direction: column; /* Liens empilés en colonne */
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
   margin: 0;
-
-  flex-wrap: wrap; /* Permet aux éléments de se réorganiser sur de petits écrans */
+  padding: 0;
+  list-style: none;
+  width: 100%;
 }
 
-/* Navigation List Items */
-.navList li {
-  margin: 0 10px; /* Espacement entre les éléments */
+@media (min-width: 768px) {
+  .navList {
+    flex-direction: row;
+    gap: 2rem;
+  }
 }
 
-/* Links */
 .link {
-  color: white; /* Même couleur que les liens de la nav bar */
   text-decoration: none;
-  font-size: 18px;
+  color: white;
+  font-weight: 500;
+  font-size: 1rem;
+  position: relative;
   transition: color 0.3s ease;
 }
 
+@media (min-width: 768px) {
+  .link {
+    font-size: 1.1rem;
+  }
+}
+
+.link::after {
+  content: "";
+  position: absolute;
+  bottom: -3px;
+  left: 0;
+  height: 2px;
+  width: 0%;
+  background-color: #facc15; /* Jaune clair */
+  transition: width 0.3s ease;
+}
+
 .link:hover {
-  color: rgba(0, 0, 0, 1);
+  color: #facc15; /* Hover jaune */
 }
 
-/* Réduction de la taille des liens et réajustement du padding sur mobile */
-@media (max-width: 768px) {
-  .header {
-    padding: 10px; /* Réduit le padding pour les petits écrans */
-  }
-
-  .link {
-    font-size: 16px; /* Réduit la taille des liens */
-    text-align: center; /* Centre le texte pour une meilleure présentation sur mobile */
-  }
-
-  .navList {
-    flex-direction: column; /* Les liens s'affichent maintenant en colonne */
-    align-items: center; /* Centrer les liens verticalement */
-  }
-
-  .navList li {
-    margin: 5px 0; /* Espacement vertical entre les éléments */
-  }
+.link:hover::after {
+  width: 100%;
 }
 
-/* Réduction supplémentaire pour les très petits écrans */
-@media (max-width: 480px) {
-  .link {
-    font-size: 14px; /* Réduction supplémentaire pour les téléphones */
-  }
+.footerText {
+  font-size: 0.75rem;
+  color: #e2e8f0; /* Gris clair */
+  margin-top: 1rem;
+}
 
-  .header {
-    padding: 10px; /* Réduit encore le padding pour les très petits écrans */
+@media (min-width: 768px) {
+  .footerText {
+    margin-top: 0;
   }
 }

@@ -20,6 +20,7 @@ import {
   setPersistence,
   browserLocalPersistence,
 } from "firebase/auth";
+import { CssBaseline } from "@mui/material";
 export default function ProMessages() {
   const [conversations, setConversations] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -168,6 +169,7 @@ export default function ProMessages() {
 
   return (
     <div>
+      <CssBaseline />
       <ResponsiveAppBar />
       <Box sx={{ padding: 10 }}>
         <Typography variant="h4" gutterBottom>
@@ -256,7 +258,9 @@ export default function ProMessages() {
             ))}
           </Grid>
         )}
-        <Header />
+        <Box sx={{ width: "100%", mt: 4 }}>
+          <Header />
+        </Box>
       </Box>
     </div>
   );

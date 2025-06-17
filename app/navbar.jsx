@@ -137,9 +137,11 @@ function ResponsiveAppBar() {
   ];
 
   const handleProfileClick = () => {
+    router.push(role === "pro" ? "/porfilepro" : "/profil");
+  };
+  const handleAccueilClick = () => {
     router.push(role === "pro" ? "/porfilepro" : "/accueil");
   };
-
   return (
     <ThemeProvider theme={theme}>
       <AppBar position="static">
@@ -147,7 +149,7 @@ function ResponsiveAppBar() {
           <Toolbar disableGutters>
             {/* Logo */}
             <Box
-              onClick={handleProfileClick}
+              onClick={handleAccueilClick}
               sx={{ display: "flex", alignItems: "center", cursor: "pointer" }}
             >
               <Image
@@ -176,11 +178,17 @@ function ResponsiveAppBar() {
                       }
                       sx={{
                         my: 2,
-                        color: theme.palette.secondary.main,
+                        color: "#FFFFFF",
+                        fontSize: { xs: "1rem", md: "1.1rem" },
                         backgroundColor: theme.palette.primary.main,
-                        "&:hover": { backgroundColor: "#6c635e" },
+                        "&:hover": {
+                          backgroundColor: "#6c635e",
+                          color: "#FFFFFF", // facultatif, pour rendre plus lisible au survol
+                        },
                         marginLeft: 2,
                         borderRadius: "8px",
+                        textTransform: "none",
+                        fontWeight: 500,
                       }}
                     >
                       {item.label}

@@ -23,7 +23,7 @@ import {
 } from "firebase/auth";
 import CookieAccepter from "../component/cookie/page";
 import Header from "../header";
-
+import CssBaseline from "@mui/material/CssBaseline";
 export default function MultiActionAreaCard() {
   const [loading, setLoading] = useState(true);
   const [users, setUsers] = useState([]);
@@ -80,16 +80,15 @@ export default function MultiActionAreaCard() {
       sx={{
         backgroundColor: "#FCFEF7",
         minHeight: "100vh",
-        paddingTop: "80px",
-        paddingBottom: "60px",
+
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
       }}
     >
+      <CssBaseline />
       <ResponsiveAppBar />
       <CookieAccepter />
-
       <Box sx={{ maxWidth: "1000px", textAlign: "center", px: 2, mb: 5 }}>
         <Typography
           variant="h3"
@@ -114,7 +113,6 @@ export default function MultiActionAreaCard() {
           bienveillance.
         </Typography>
       </Box>
-
       <Grid
         container
         spacing={4}
@@ -183,8 +181,7 @@ export default function MultiActionAreaCard() {
           </Typography>
         )}
       </Grid>
-
-      <Box sx={{ mt: 10, width: "100%" }}>
+      <Box sx={{ width: "100%", mt: 4 }}>
         <Header />
       </Box>
     </Box>

@@ -17,10 +17,12 @@ import {
   ListItem,
   Avatar,
   Button,
+  Box,
 } from "@mui/material";
 import ResponsiveAppBar from "../navbar";
 import CookieAccepter from "../component/cookie/page";
 import Header from "../header";
+import { CssBaseline } from "@mui/material";
 export default function ProfessionalAppointments() {
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -149,6 +151,7 @@ export default function ProfessionalAppointments() {
 
   return (
     <div>
+      <CssBaseline />
       <ResponsiveAppBar />
       <CookieAccepter />
       <Typography
@@ -245,7 +248,9 @@ export default function ProfessionalAppointments() {
           ))}
         </List>
       )}
-      <Header />
+      <Box sx={{ width: "100%", mt: 4 }}>
+        <Header />
+      </Box>
     </div>
   );
 }

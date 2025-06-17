@@ -1,4 +1,5 @@
 import React from "react";
+
 export const metadata = {
   title: "Canin epanoui",
   description:
@@ -24,7 +25,9 @@ export default function RootLayout({ children }) {
         <meta property="og:type" content="website" />
         <title>{metadata.title}</title>
       </head>
-      <body>{children}</body>
+      <body style={{ margin: 0, padding: 0, background: "#f9faf6" }}>
+        {children}
+      </body>
     </html>
   );
 }

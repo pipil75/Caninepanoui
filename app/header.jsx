@@ -4,46 +4,33 @@ import styles from "./Header.module.css";
 
 const Header = () => {
   return (
-    <header className={`bg-gray-700 text-white py-4 px-6 ${styles.header}`}>
-      <nav
-        className={`container mx-auto flex flex-col md:flex-row justify-between items-center ${styles.navContainer}`}
-      >
-        <ul
-          className={`flex flex-col md:flex-row gap-4 md:gap-8 ${styles.navList}`}
-        >
+    <header className={styles.header}>
+      <nav className={styles.navContainer}>
+        <ul className={styles.navList}>
           <li>
             <Link href="/mentionlegal" legacyBehavior>
-              <a
-                className={`hover:underline ${styles.link}`}
-                aria-label="mention legal"
-              >
-                Mention légal
+              <a className={styles.link} aria-label="Mention légale">
+                Mention légale
               </a>
             </Link>
           </li>
           <li>
             <Link href="/about" legacyBehavior>
-              <a
-                className={`hover:underline ${styles.link}`}
-                aria-label="a propos"
-              >
+              <a className={styles.link} aria-label="À propos">
                 À propos de nous
               </a>
             </Link>
           </li>
           <li>
             <Link href="/contact" legacyBehavior>
-              <a
-                className={`hover:underline ${styles.link}`}
-                aria-label="contact"
-              >
+              <a className={styles.link} aria-label="Contact">
                 Contact
               </a>
             </Link>
           </li>
         </ul>
-        <p className={`text-sm mt-4 md:mt-0 ${styles.footerText}`}>
-          © 2024 Canin Epanoui. Tous droits réservés.
+        <p className={styles.footerText}>
+          © 2024 Canin Épanoui. Tous droits réservés.
         </p>
       </nav>
     </header>
