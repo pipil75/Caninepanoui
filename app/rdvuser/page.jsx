@@ -87,6 +87,7 @@ const UserAppointments = () => {
 
   return (
     <div style={{ padding: "20px" }}>
+      <ResponsiveAppBar />
       <Typography
         variant="h2"
         sx={{
@@ -133,7 +134,7 @@ const UserAppointments = () => {
                 }}
               >
                 <Avatar
-                  src={appointment.proImage || "/default-profile.png"}
+                  src={appointment.userImage || "/default-profile.png"}
                   alt="User Profile"
                   sx={{
                     width: 60,

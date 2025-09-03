@@ -1,16 +1,24 @@
 "use client";
 import * as React from "react";
-import Box from "@mui/material/Box";
-import TextField from "@mui/material/TextField";
-import { Card } from "@mui/material";
-import CardActions from "@mui/material/CardActions";
-import CardContent from "@mui/material/CardContent";
-import Button from "@mui/material/Button";
-import Typography from "@mui/material/Typography";
-import { createTheme, ThemeProvider } from "@mui/material/styles";
+import {
+  Box,
+  TextField,
+  Card,
+  CardActions,
+  CardContent,
+  Button,
+  Typography,
+  createTheme,
+  ThemeProvider,
+} from "@mui/material";
 import { useState, useEffect } from "react";
-import { auth, database } from "../../lib/firebase";
-import { ref, update, get } from "firebase/database";
+import { auth, database, storage } from "../../lib/firebase";
+import { ref as dbRef, get, update } from "firebase/database";
+import {
+  ref as storageRef,
+  uploadBytes,
+  getDownloadURL,
+} from "firebase/storage";
 import { updatePassword, onAuthStateChanged } from "firebase/auth";
 import ResponsiveAppBar from "../navbar";
 import Header from "../header";
@@ -30,42 +38,53 @@ export default function Cardprofil() {
   const [currentUser, setCurrentUser] = useState(null);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [role, setRole] = useState("");
-  const [description, setDescription] = useState("");
+  const [role, setRole] = useState("user");
   const [experience, setExperience] = useState("");
+  const [prix, setPrix] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [confirmationMessage, setConfirmationMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
-  const [prix, setPrix] = useState("");
+  const [profileImage, setProfileImage] = useState("");
+  const [imageFile, setImageFile] = useState(null);
+
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
         setCurrentUser(user);
         fetchUserProfile(user.uid);
+        fetchProfileImage(user.uid);
       }
     });
-
     return () => unsubscribe();
   }, []);
 
   const fetchUserProfile = async (uid) => {
     try {
-      const userRef = ref(database, `users/${uid}`);
+      const userRef = dbRef(database, `users/${uid}`);
       const snapshot = await get(userRef);
       if (snapshot.exists()) {
-        const userData = snapshot.val();
-        setName(userData.name || "");
-        setEmail(userData.email || "");
-        setRole(userData.role || "user");
-        setDescription(userData.description || "");
-        setExperience(userData.experience || "");
+        const data = snapshot.val();
+        setName(data.name || "");
+        setEmail(data.email || "");
+        setRole(data.role || "user");
+        setExperience(data.experience || "");
+        setPrix(data.prix || "");
       }
     } catch (error) {
-      console.error(
-        "Erreur lors de la récupération du profil :",
-        error.message
-      );
+      console.error("Erreur récupération profil :", error.message);
+    }
+  };
+
+  const fetchProfileImage = async (uid) => {
+    try {
+      // On pointe vers le fichier précis dans le sous-dossier uid
+      const imgRef = storageRef(storage, `images/${uid}/profile.jpg`);
+      const url = await getDownloadURL(imgRef);
+      setProfileImage(url);
+    } catch (error) {
+      console.log("Pas d'image de profil trouvée.");
+      setProfileImage(""); // reset si pas d'image
     }
   };
 
@@ -85,28 +104,34 @@ export default function Cardprofil() {
     }
 
     try {
-      const userRef = ref(database, `users/${currentUser.uid}`);
+      const uid = currentUser.uid;
+
+      const userRef = dbRef(database, `users/${uid}`);
+
+      // Met à jour uniquement experience et prix si role === "pro"
       await update(userRef, {
         name,
         email,
-        description,
         experience: role === "pro" ? experience : "",
-        prix: role === "pro" && prix,
+        prix: role === "pro" ? prix : "",
       });
 
       if (password) {
         await updatePassword(currentUser, password);
-        setConfirmationMessage(
-          "Le mot de passe a été mis à jour avec succès !"
-        );
-      } else {
-        setConfirmationMessage(
-          "Les informations ont été mises à jour avec succès !"
-        );
       }
-    } catch (error) {
-      console.error("Erreur lors de la mise à jour du profil :", error.message);
-      setErrorMessage("Erreur : " + error.message);
+
+      if (imageFile) {
+        // Upload dans images/{uid}/profile.jpg
+        const imgRef = storageRef(storage, `images/${uid}/profile.jpg`);
+        await uploadBytes(imgRef, imageFile);
+        const url = await getDownloadURL(imgRef);
+        setProfileImage(url + "?t=" + new Date().getTime()); // cache busting
+      }
+
+      setConfirmationMessage("Profil mis à jour avec succès !");
+    } catch (err) {
+      console.error("Erreur mise à jour profil :", err.message);
+      setErrorMessage("Erreur : " + err.message);
     }
   };
 
@@ -141,6 +166,19 @@ export default function Cardprofil() {
                 {errorMessage}
               </Typography>
             )}
+            {profileImage && (
+              <Box sx={{ mt: 2, mb: 2 }}>
+                <img
+                  src={profileImage}
+                  alt="Profil"
+                  style={{
+                    width: "100%",
+                    maxHeight: "300px",
+                    objectFit: "cover",
+                  }}
+                />
+              </Box>
+            )}
           </CardContent>
           <CardActions>
             {currentUser ? (
@@ -153,9 +191,7 @@ export default function Cardprofil() {
                 <TextField
                   required
                   fullWidth
-                  id="name"
                   label="Nom"
-                  autoComplete="name"
                   variant="standard"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
@@ -163,50 +199,33 @@ export default function Cardprofil() {
                 <TextField
                   required
                   fullWidth
-                  id="email"
                   label="Email"
-                  autoComplete="email"
                   variant="standard"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                 />
 
                 {role === "pro" && (
-                  <TextField
-                    fullWidth
-                    id="experience"
-                    label="Expérience"
-                    autoComplete="experience"
-                    variant="standard"
-                    value={experience}
-                    onChange={(e) => setExperience(e.target.value)}
-                  />
-                )}
-                {role === "pro" && (
-                  <TextField
-                    fullWidth
-                    id="prix"
-                    label="Prix prestation"
-                    autoComplete=" prix prestation"
-                    variant="standard"
-                    value={prix}
-                    onChange={(e) => setPrix(e.target.value)}
-                  />
+                  <>
+                    <TextField
+                      fullWidth
+                      label="Expérience"
+                      variant="standard"
+                      value={experience}
+                      onChange={(e) => setExperience(e.target.value)}
+                    />
+                    <TextField
+                      fullWidth
+                      label="Prix prestation"
+                      variant="standard"
+                      value={prix}
+                      onChange={(e) => setPrix(e.target.value)}
+                    />
+                  </>
                 )}
 
                 <TextField
                   fullWidth
-                  id="description"
-                  label="Description"
-                  autoComplete="description"
-                  variant="standard"
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                />
-
-                <TextField
-                  fullWidth
-                  id="password"
                   label="Nouveau mot de passe"
                   type="password"
                   variant="standard"
@@ -215,13 +234,26 @@ export default function Cardprofil() {
                 />
                 <TextField
                   fullWidth
-                  id="confirmPassword"
                   label="Confirmez le mot de passe"
                   type="password"
                   variant="standard"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                 />
+
+                <Button
+                  variant="contained"
+                  component="label"
+                  sx={{ mt: 2, mb: 1 }}
+                >
+                  Télécharger une nouvelle image
+                  <input
+                    type="file"
+                    hidden
+                    accept="image/*"
+                    onChange={(e) => setImageFile(e.target.files[0])}
+                  />
+                </Button>
 
                 <Button
                   type="submit"
