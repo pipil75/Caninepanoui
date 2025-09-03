@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { ref, push, update, remove, onValue } from "firebase/database";
 import { auth, database } from "../../../lib/firebase";
 import {
@@ -11,6 +12,7 @@ import {
   TextField,
   Button,
   Grid,
+  CssBaseline,
 } from "@mui/material";
 import { Delete, Reply } from "@mui/icons-material";
 import ResponsiveAppBar from "../../navbar";
@@ -20,95 +22,84 @@ import {
   setPersistence,
   browserLocalPersistence,
 } from "firebase/auth";
-import { CssBaseline } from "@mui/material";
+
 export default function ProMessages() {
+  const router = useRouter();
+
   const [conversations, setConversations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [reply, setReply] = useState({}); // Réponses par conversation ID
-  // Vérification de l'authentification de l'utilisateur
-  const [authLoading, setAuthLoading] = useState(true);
 
   useEffect(() => {
-    // Configurer la persistance de session
-    setPersistence(auth, browserLocalPersistence)
-      .then(() => {
-        // Une fois la persistance configurée, surveiller l'état de l'utilisateur
-        const unsubscribe = onAuthStateChanged(auth, (user) => {
+    let unsubscribeAuth = null;
+    let unsubscribeRTDB = null;
+
+    const init = async () => {
+      try {
+        // Persistance locale
+        await setPersistence(auth, browserLocalPersistence);
+
+        // Écoute l'état d'auth puis branche la DB
+        unsubscribeAuth = onAuthStateChanged(auth, (user) => {
           if (!user) {
-            // Si l'utilisateur n'est pas connecté, redirection vers la page d'accueil
             router.push("/");
-          } else {
-            // L'utilisateur est connecté, arrêter le chargement de l'auth
-            setAuthLoading(false);
+            return;
           }
+
+          const proId = user.uid;
+          const conversationsRef = ref(
+            database,
+            `users/pro/${proId}/conversations`
+          );
+
+          // Écoute temps réel des conversations
+          unsubscribeRTDB = onValue(conversationsRef, (snapshot) => {
+            if (snapshot.exists()) {
+              const data = snapshot.val();
+              const conversationsArray = Object.keys(data).map((key) => ({
+                id: key,
+                ...data[key],
+                messages: data[key].messages
+                  ? Object.keys(data[key].messages).map((msgKey) => ({
+                      id: msgKey,
+                      ...data[key].messages[msgKey],
+                    }))
+                  : [],
+              }));
+              setConversations(conversationsArray);
+            } else {
+              setConversations([]);
+            }
+            setLoading(false);
+          });
         });
-
-        return () => unsubscribe(); // Nettoyer lors du démontage
-      })
-      .catch((error) => {
-        console.error(
-          "Erreur lors de la configuration de la persistance :",
-          error
-        );
-        // Optionnel : gérer l'erreur ici, par exemple, afficher un message à l'utilisateur
-      });
-    const fetchConversations = async () => {
-      const currentUser = auth.currentUser;
-
-      if (!currentUser) {
-        console.error("Utilisateur non authentifié.");
+      } catch (e) {
+        console.error("Erreur d'initialisation:", e);
         setLoading(false);
-        return;
       }
-
-      const proId = currentUser.uid;
-      const conversationsRef = ref(
-        database,
-        `users/pro/${proId}/conversations`
-      );
-
-      onValue(conversationsRef, (snapshot) => {
-        if (snapshot.exists()) {
-          const data = snapshot.val();
-          const conversationsArray = Object.keys(data).map((key) => ({
-            id: key,
-            ...data[key],
-            messages: data[key].messages
-              ? Object.keys(data[key].messages).map((msgKey) => ({
-                  id: msgKey,
-                  ...data[key].messages[msgKey],
-                }))
-              : [],
-          }));
-          console.log("Conversations récupérées :", conversationsArray);
-          setConversations(conversationsArray);
-        } else {
-          setConversations([]);
-        }
-        setLoading(false);
-      });
     };
 
-    fetchConversations();
-  }, []);
+    init();
+
+    return () => {
+      if (unsubscribeRTDB) unsubscribeRTDB(); // détache l'écoute RTDB
+      if (unsubscribeAuth) unsubscribeAuth(); // détache l'écoute auth
+    };
+  }, [router]);
 
   const handleReplyChange = (conversationId, value) => {
-    setReply((prev) => ({
-      ...prev,
-      [conversationId]: value,
-    }));
+    setReply((prev) => ({ ...prev, [conversationId]: value }));
   };
 
   const handleReplySubmit = async (conversation) => {
     const conversationId = conversation.id;
-    const recipientId = conversation.recipientId; // Cela fait référence à l'ID de l'utilisateur (le client)
+    const recipientId = conversation.recipientId;
 
     if (!reply[conversationId]?.trim()) {
       alert("La réponse ne peut pas être vide.");
       return;
     }
 
-    // Création des données du message
     const messageData = {
       message: reply[conversationId].trim(),
       senderId: auth.currentUser.uid,
@@ -117,48 +108,34 @@ export default function ProMessages() {
     };
 
     try {
-      const messagesRef = ref(
-        database,
-        `users/pro/${auth.currentUser.uid}/conversations/${conversationId}/messages`
-      );
-
-      const newMessageRef = push(messagesRef);
-
-      const newMessageKey = newMessageRef.key;
+      const newMsgRefPath = `users/pro/${auth.currentUser.uid}/conversations/${conversationId}/messages`;
+      const newMessageKey = push(ref(database, newMsgRefPath)).key;
 
       const updates = {};
-
-      updates[
-        `users/pro/${auth.currentUser.uid}/conversations/${conversationId}/messages/${newMessageKey}`
-      ] = messageData;
-
+      updates[`${newMsgRefPath}/${newMessageKey}`] = messageData;
       updates[
         `users/user/${recipientId}/conversations/${conversationId}/messages/${newMessageKey}`
       ] = messageData;
 
       await update(ref(database), updates);
-
-      setReply((prev) => ({ ...prev, [conversationId]: "" })); // Réinitialise la réponse pour cette conversation
+      setReply((prev) => ({ ...prev, [conversationId]: "" }));
     } catch (error) {
       console.error("Erreur lors de l'envoi de la réponse :", error.message);
-      alert(
-        "Une erreur s'est produite lors de l'envoi de la réponse. Veuillez réessayer."
-      );
+      alert("Une erreur s'est produite. Veuillez réessayer.");
     }
   };
+
   const handleDelete = async (conversationId) => {
-    const conversationRef = ref(
-      database,
-      `users/pro/${auth.currentUser.uid}/conversations/${conversationId}`
-    );
     try {
-      await remove(conversationRef);
+      await remove(
+        ref(
+          database,
+          `users/pro/${auth.currentUser.uid}/conversations/${conversationId}`
+        )
+      );
       alert("Conversation supprimée !");
     } catch (error) {
-      console.error(
-        "Erreur lors de la suppression de la conversation :",
-        error.message
-      );
+      console.error("Erreur lors de la suppression :", error.message);
       alert("Une erreur s'est produite lors de la suppression.");
     }
   };
@@ -168,13 +145,27 @@ export default function ProMessages() {
   }
 
   return (
-    <div>
+    // 👇 Wrapper pleine hauteur avec flex column pour sticky footer
+    <Box
+      sx={{
+        minHeight: "100dvh",
+        display: "flex",
+        flexDirection: "column",
+        bgcolor: "background.default",
+      }}
+    >
       <CssBaseline />
       <ResponsiveAppBar />
-      <Box sx={{ padding: 10 }}>
+
+      {/* Contenu principal qui pousse le footer en bas */}
+      <Box
+        component="main"
+        sx={{ flex: 1, px: { xs: 2, md: 8 }, py: { xs: 3, md: 6 } }}
+      >
         <Typography variant="h4" gutterBottom>
           Conversations Professionnel
         </Typography>
+
         {conversations.length === 0 ? (
           <Typography variant="h6" color="text.secondary">
             Aucune conversation trouvée.
@@ -189,17 +180,17 @@ export default function ProMessages() {
                       Avec : {conversation.recipientName}
                     </Typography>
 
-                    {/* Affichage des messages */}
-                    <Box sx={{ marginTop: 2 }}>
+                    {/* Messages */}
+                    <Box sx={{ mt: 2 }}>
                       <Typography variant="subtitle1">Messages :</Typography>
                       {conversation.messages.map((msg) => (
                         <Box
                           key={msg.id}
                           sx={{
                             border: "1px solid #ddd",
-                            borderRadius: "8px",
-                            padding: "8px",
-                            marginBottom: "8px",
+                            borderRadius: 2,
+                            p: 1.2,
+                            mb: 1,
                             backgroundColor:
                               msg.senderId === auth.currentUser.uid
                                 ? "#dcf8c6"
@@ -220,8 +211,8 @@ export default function ProMessages() {
                       ))}
                     </Box>
 
-                    {/* Formulaire de réponse */}
-                    <Box sx={{ marginTop: 2 }}>
+                    {/* Réponse */}
+                    <Box sx={{ mt: 2 }}>
                       <TextField
                         fullWidth
                         size="small"
@@ -231,7 +222,7 @@ export default function ProMessages() {
                           handleReplyChange(conversation.id, e.target.value)
                         }
                       />
-                      <Box sx={{ marginTop: 1, display: "flex", gap: 1 }}>
+                      <Box sx={{ mt: 1, display: "flex", gap: 1 }}>
                         <Button
                           variant="contained"
                           color="primary"
@@ -258,10 +249,12 @@ export default function ProMessages() {
             ))}
           </Grid>
         )}
-        <Box sx={{ width: "100%", mt: 4 }}>
-          <Header />
-        </Box>
       </Box>
-    </div>
+
+      {/* Footer sticky : ton composant Header utilisé comme footer */}
+      <Box component="footer" sx={{ mt: "auto", width: "100%" }}>
+        <Header />
+      </Box>
+    </Box>
   );
 }

@@ -10,6 +10,7 @@ import {
   Typography,
   createTheme,
   ThemeProvider,
+  CssBaseline,
 } from "@mui/material";
 import { useState, useEffect } from "react";
 import { auth, database, storage } from "../../lib/firebase";
@@ -25,12 +26,8 @@ import Header from "../header";
 
 const theme = createTheme({
   palette: {
-    primary: {
-      main: "#FCFEF7",
-    },
-    secondary: {
-      main: "#847774",
-    },
+    primary: { main: "#FCFEF7" },
+    secondary: { main: "#847774" },
   },
 });
 
@@ -78,13 +75,11 @@ export default function Cardprofil() {
 
   const fetchProfileImage = async (uid) => {
     try {
-      // On pointe vers le fichier précis dans le sous-dossier uid
       const imgRef = storageRef(storage, `images/${uid}/profile.jpg`);
       const url = await getDownloadURL(imgRef);
       setProfileImage(url);
-    } catch (error) {
-      console.log("Pas d'image de profil trouvée.");
-      setProfileImage(""); // reset si pas d'image
+    } catch {
+      setProfileImage("");
     }
   };
 
@@ -97,7 +92,6 @@ export default function Cardprofil() {
       setErrorMessage("Erreur : Aucun utilisateur connecté.");
       return;
     }
-
     if (password && password !== confirmPassword) {
       setErrorMessage("Les mots de passe ne correspondent pas.");
       return;
@@ -105,10 +99,8 @@ export default function Cardprofil() {
 
     try {
       const uid = currentUser.uid;
-
       const userRef = dbRef(database, `users/${uid}`);
 
-      // Met à jour uniquement experience et prix si role === "pro"
       await update(userRef, {
         name,
         email,
@@ -121,11 +113,14 @@ export default function Cardprofil() {
       }
 
       if (imageFile) {
-        // Upload dans images/{uid}/profile.jpg
         const imgRef = storageRef(storage, `images/${uid}/profile.jpg`);
-        await uploadBytes(imgRef, imageFile);
+        await uploadBytes(imgRef, imageFile, {
+          cacheControl: "public, max-age=0, must-revalidate",
+        });
         const url = await getDownloadURL(imgRef);
-        setProfileImage(url + "?t=" + new Date().getTime()); // cache busting
+        setProfileImage(
+          `${url}${url.includes("?") ? "&" : "?"}v=${Date.now()}`
+        );
       }
 
       setConfirmationMessage("Profil mis à jour avec succès !");
@@ -136,145 +131,172 @@ export default function Cardprofil() {
   };
 
   return (
-    <ThemeProvider theme={theme}>
+    <Box
+      sx={{
+        minHeight: "100dvh",
+        display: "flex",
+        flexDirection: "column",
+        bgcolor: "background.default",
+      }}
+    >
+      <CssBaseline />
       <ResponsiveAppBar />
+
+      {/* Contenu principal : ajoute de l'espace sous la navbar */}
       <Box
+        component="main"
         sx={{
+          flex: 1,
           display: "flex",
           justifyContent: "center",
-          alignItems: "center",
-          paddingBottom: "64px",
-          boxSizing: "border-box",
-          minHeight: "calc(100vh - -45px)",
+          alignItems: "flex-start",
+          px: 2,
+          mt: { xs: 6, sm: 8, md: 10 }, // <— espace entre navbar et la card
         }}
       >
-        <Card sx={{ maxWidth: 600, backgroundColor: "primary.main" }}>
-          <CardContent>
-            <Typography
-              variant="h3"
-              sx={{ color: theme.palette.secondary.main }}
-            >
-              Informations du profil
-            </Typography>
-            {confirmationMessage && (
-              <Typography variant="body1" sx={{ color: "green", mt: 2 }}>
-                {confirmationMessage}
-              </Typography>
-            )}
-            {errorMessage && (
-              <Typography variant="body1" sx={{ color: "red", mt: 2 }}>
-                {errorMessage}
-              </Typography>
-            )}
-            {profileImage && (
-              <Box sx={{ mt: 2, mb: 2 }}>
-                <img
-                  src={profileImage}
-                  alt="Profil"
-                  style={{
-                    width: "100%",
-                    maxHeight: "300px",
-                    objectFit: "cover",
-                  }}
-                />
-              </Box>
-            )}
-          </CardContent>
-          <CardActions>
-            {currentUser ? (
-              <Box
-                component="form"
-                noValidate
-                sx={{ mt: 1 }}
-                onSubmit={handleSubmit}
+        {/* Le thème personnalisé ne s'applique qu'à la carte, pas au Header */}
+        <ThemeProvider theme={theme}>
+          <Card
+            sx={{
+              maxWidth: 600,
+              width: "100%",
+              bgcolor: "primary.main",
+              boxShadow: 4,
+              borderRadius: 2,
+            }}
+          >
+            <CardContent>
+              <Typography
+                variant="h3"
+                sx={{ color: theme.palette.secondary.main }}
               >
-                <TextField
-                  required
-                  fullWidth
-                  label="Nom"
-                  variant="standard"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                />
-                <TextField
-                  required
-                  fullWidth
-                  label="Email"
-                  variant="standard"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                />
-
-                {role === "pro" && (
-                  <>
-                    <TextField
-                      fullWidth
-                      label="Expérience"
-                      variant="standard"
-                      value={experience}
-                      onChange={(e) => setExperience(e.target.value)}
-                    />
-                    <TextField
-                      fullWidth
-                      label="Prix prestation"
-                      variant="standard"
-                      value={prix}
-                      onChange={(e) => setPrix(e.target.value)}
-                    />
-                  </>
-                )}
-
-                <TextField
-                  fullWidth
-                  label="Nouveau mot de passe"
-                  type="password"
-                  variant="standard"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                />
-                <TextField
-                  fullWidth
-                  label="Confirmez le mot de passe"
-                  type="password"
-                  variant="standard"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                />
-
-                <Button
-                  variant="contained"
-                  component="label"
-                  sx={{ mt: 2, mb: 1 }}
-                >
-                  Télécharger une nouvelle image
-                  <input
-                    type="file"
-                    hidden
-                    accept="image/*"
-                    onChange={(e) => setImageFile(e.target.files[0])}
-                  />
-                </Button>
-
-                <Button
-                  type="submit"
-                  fullWidth
-                  variant="contained"
-                  sx={{ mt: 2, backgroundColor: "secondary.main" }}
-                >
-                  Enregistrer
-                </Button>
-              </Box>
-            ) : (
-              <Typography variant="body1" sx={{ color: "red" }}>
-                Veuillez vous connecter pour accéder à votre profil.
+                Informations du profil
               </Typography>
-            )}
-          </CardActions>
-        </Card>
+
+              {confirmationMessage && (
+                <Typography variant="body1" sx={{ color: "green", mt: 2 }}>
+                  {confirmationMessage}
+                </Typography>
+              )}
+              {errorMessage && (
+                <Typography variant="body1" sx={{ color: "red", mt: 2 }}>
+                  {errorMessage}
+                </Typography>
+              )}
+
+              {profileImage && (
+                <Box sx={{ mt: 2, mb: 2 }}>
+                  <img
+                    src={profileImage}
+                    alt="Profil"
+                    style={{
+                      width: "100%",
+                      maxHeight: 300,
+                      objectFit: "cover",
+                    }}
+                  />
+                </Box>
+              )}
+            </CardContent>
+
+            <CardActions>
+              {currentUser ? (
+                <Box
+                  component="form"
+                  noValidate
+                  sx={{ mt: 1, width: "100%", px: 2 }}
+                  onSubmit={handleSubmit}
+                >
+                  <TextField
+                    required
+                    fullWidth
+                    label="Nom"
+                    variant="standard"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                  />
+                  <TextField
+                    required
+                    fullWidth
+                    label="Email"
+                    variant="standard"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                  />
+
+                  {role === "pro" && (
+                    <>
+                      <TextField
+                        fullWidth
+                        label="Expérience"
+                        variant="standard"
+                        value={experience}
+                        onChange={(e) => setExperience(e.target.value)}
+                      />
+                      <TextField
+                        fullWidth
+                        label="Prix prestation"
+                        variant="standard"
+                        value={prix}
+                        onChange={(e) => setPrix(e.target.value)}
+                      />
+                    </>
+                  )}
+
+                  <TextField
+                    fullWidth
+                    label="Nouveau mot de passe"
+                    type="password"
+                    variant="standard"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                  />
+                  <TextField
+                    fullWidth
+                    label="Confirmez le mot de passe"
+                    type="password"
+                    variant="standard"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                  />
+
+                  <Button
+                    variant="contained"
+                    component="label"
+                    sx={{ mt: 2, mb: 1 }}
+                  >
+                    Télécharger une nouvelle image
+                    <input
+                      type="file"
+                      hidden
+                      accept="image/*"
+                      onChange={(e) => setImageFile(e.target.files[0])}
+                    />
+                  </Button>
+
+                  <Button
+                    type="submit"
+                    fullWidth
+                    variant="contained"
+                    sx={{ mt: 2, bgcolor: "secondary.main" }}
+                  >
+                    Enregistrer
+                  </Button>
+                </Box>
+              ) : (
+                <Typography variant="body1" sx={{ color: "red" }}>
+                  Veuillez vous connecter pour accéder à votre profil.
+                </Typography>
+              )}
+            </CardActions>
+          </Card>
+        </ThemeProvider>
       </Box>
-      <Box sx={{ width: "100%", mt: 4 }}>
+
+      {/* Footer (Header) — en dehors du ThemeProvider pour garder la même écriture partout */}
+      <Box component="footer" sx={{ mt: "auto", width: "100%" }}>
         <Header />
       </Box>
-    </ThemeProvider>
+    </Box>
   );
 }

@@ -1,7 +1,14 @@
 "use client";
 import { useRouter, useParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import { ref, get, push, set, update } from "firebase/database";
+import { ref, get, push, update, onValue } from "firebase/database";
+import {
+  getStorage,
+  ref as storageRef,
+  getDownloadURL,
+  getMetadata,
+} from "firebase/storage";
+
 import {
   Box,
   TextField,
@@ -22,12 +29,75 @@ import { ArrowBack, Email, CalendarToday, Payment } from "@mui/icons-material";
 import { database, auth } from "../../../lib/firebase";
 import ResponsiveAppBar from "../../navbar";
 import { PayPalScriptProvider, PayPalButtons } from "@paypal/react-paypal-js";
-import { sendMessageToBothSides } from "@/app/message/utils/page";
 import styles from "../Profil.module.css";
+
+function addVersionParam(baseUrl, version) {
+  try {
+    const u = new URL(baseUrl);
+    u.searchParams.set("v", String(version || Date.now()));
+    return u.toString();
+  } catch {
+    const sep = baseUrl.includes("?") ? "&" : "?";
+    return `${baseUrl}${sep}v=${encodeURIComponent(version || Date.now())}`;
+  }
+}
+
+/* IMPORTANT: On TENTE D’ABORD Storage (profile.jpg) puis on tombe
+   sur l’URL DB uniquement si Storage ne contient pas profile.jpg. */
+async function loadFreshProfileImage(userId, dbUrlOrPath) {
+  const storage = getStorage();
+
+  const tryPaths = [
+    `images/${userId}/profile.jpg`, // minuscule (d’après ton URL)
+    `Images/${userId}/profile.jpg`,
+    `Images/${userId}/Profil.jpg`,
+  ];
+
+  // 1) Essayer d’abord profile.jpg dans Storage (avec cache-busting)
+  for (const p of tryPaths) {
+    try {
+      const imgRef = storageRef(storage, p);
+      const [url, meta] = await Promise.all([
+        getDownloadURL(imgRef),
+        getMetadata(imgRef),
+      ]);
+      const v = meta?.generation || meta?.updated || Date.now().toString();
+      return addVersionParam(url, v);
+    } catch {
+      // on essaie la variante suivante
+    }
+  }
+
+  // 2) Si Storage n’a pas profile.jpg, on regarde DB
+  if (dbUrlOrPath) {
+    // path relatif -> résoudre dans Storage
+    if (!/^https?:\/\//i.test(dbUrlOrPath)) {
+      try {
+        const imgRef = storageRef(storage, dbUrlOrPath);
+        const [url, meta] = await Promise.all([
+          getDownloadURL(imgRef),
+          getMetadata(imgRef),
+        ]);
+        const v = meta?.generation || meta?.updated || Date.now().toString();
+        return addVersionParam(url, v);
+      } catch {
+        // continue vers fallback
+      }
+    } else {
+      // URL HTTPS -> ajouter v proprement
+      return addVersionParam(dbUrlOrPath, Date.now());
+    }
+  }
+
+  // 3) Fallback
+  return "https://via.placeholder.com/100";
+}
+
 export default function UserDetailPage() {
   const router = useRouter();
   const params = useParams();
-  const { id } = params; // Récupérer l'ID depuis l'URL
+  const { id } = params || {};
+
   const [user, setUser] = useState(null);
   const [professional, setProfessional] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -39,6 +109,7 @@ export default function UserDetailPage() {
   const [message, setMessage] = useState("");
   const [showPayPalPopup, setShowPayPalPopup] = useState(false);
   const [buyerEmail, setBuyerEmail] = useState("");
+
   const initialOptions = {
     "client-id":
       "AWuwTPoxttVt936EYkc_kjNKTrusQxjaGSlFGbDRW2RKgeODFTuK7n2lIsUKcwF0KgOuwbvk1XG-hSGF",
@@ -50,39 +121,49 @@ export default function UserDetailPage() {
     components: "buttons",
     "data-sdk-integration-source": "developer-studio",
   };
-  useEffect(() => {
-    if (id) {
-      const fetchUserDetail = async () => {
-        try {
-          // Récupérer les informations de l'utilisateur (le professionnel)
-          const userRef = ref(database, `users/${id}`);
-          const snapshot = await get(userRef);
-          if (snapshot.exists()) {
-            setUser(snapshot.val());
-          } else {
-            setUser(null); // Si aucune donnée trouvée
-          }
 
-          // Récupérer les informations du professionnel
-          const professionalRef = ref(database, `users/${id}`);
-          const professionalSnapshot = await get(professionalRef);
-          if (professionalSnapshot.exists()) {
-            setProfessional(professionalSnapshot.val());
-          } else {
-            setProfessional(null); // Si aucune donnée trouvée
-          }
-        } catch (error) {
-          console.error("Erreur lors de la récupération des détails:", error);
-          setUser(null);
-          setProfessional(null);
-        }
+  useEffect(() => {
+    if (!id) return;
+
+    const fetchUserDetail = async () => {
+      try {
+        const userRef = ref(database, `users/${id}`);
+        onValue(
+          userRef,
+          async (snapshot) => {
+            if (!snapshot.exists()) {
+              setUser(null);
+              setProfessional(null);
+              setLoading(false);
+              return;
+            }
+
+            const data = snapshot.val();
+
+            // Préfère toujours profile.jpg de Storage
+            const freshUrl = await loadFreshProfileImage(
+              id,
+              data.image || data.imagePath
+            );
+            const merged = { ...data, image: freshUrl };
+
+            setUser(merged);
+            setProfessional(merged);
+            setLoading(false);
+          },
+          { onlyOnce: true }
+        );
+      } catch (error) {
+        console.error("Erreur lors de la récupération des détails:", error);
+        setUser(null);
+        setProfessional(null);
         setLoading(false);
-      };
-      fetchUserDetail();
-    }
+      }
+    };
+
+    fetchUserDetail();
   }, [id]);
 
-  // Fonction pour enregistrer un rendez-vous
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
@@ -97,10 +178,8 @@ export default function UserDetailPage() {
         return;
       }
 
-      // Vérification que la date/heure est dans le futur
       const selectedDateTime = new Date(`${date}T${time}`);
       const now = new Date();
-
       if (selectedDateTime < now) {
         setConfirmationMessage(
           <span style={{ color: "red" }}>
@@ -110,23 +189,17 @@ export default function UserDetailPage() {
         return;
       }
 
-      // Référence aux rendez-vous existants de l'utilisateur
       const userAppointmentsRef = ref(
         database,
         `users/${currentUser.uid}/appointments`
       );
-
-      // Récupération des rendez-vous existants
       const userAppointmentsSnapshot = await get(userAppointmentsRef);
 
       if (userAppointmentsSnapshot.exists()) {
         const existingAppointments = userAppointmentsSnapshot.val();
-
         const isConflict = Object.values(existingAppointments).some(
-          (appointment) =>
-            appointment.date === date && appointment.time === time
+          (a) => a.date === date && a.time === time
         );
-
         if (isConflict) {
           setConfirmationMessage(
             <span style={{ color: "red" }}>
@@ -138,8 +211,8 @@ export default function UserDetailPage() {
       }
 
       const appointmentData = {
-        date: date,
-        time: time,
+        date,
+        time,
         professionalId: id,
         userId: currentUser.uid,
         userName: currentUser.displayName || "Utilisateur Anonyme",
@@ -148,17 +221,11 @@ export default function UserDetailPage() {
         proEmail: user?.email || "",
       };
 
-      const userAppointmentRef = ref(
-        database,
-        `users/${currentUser.uid}/appointments`
+      await push(
+        ref(database, `users/${currentUser.uid}/appointments`),
+        appointmentData
       );
-      await push(userAppointmentRef, appointmentData);
-
-      const professionalAppointmentRef = ref(
-        database,
-        `users/${id}/appointments`
-      );
-      await push(professionalAppointmentRef, appointmentData);
+      await push(ref(database, `users/${id}/appointments`), appointmentData);
 
       setConfirmationMessage("Le rendez-vous a été enregistré avec succès !");
       setDate("");
@@ -169,7 +236,6 @@ export default function UserDetailPage() {
     }
   };
 
-  // Fonction pour envoyer un message
   const handleSendMessage = async () => {
     try {
       if (!message.trim()) {
@@ -186,7 +252,6 @@ export default function UserDetailPage() {
         timestamp: new Date().toISOString(),
       };
 
-      // Références Firebase pour les conversations
       const userConversationsRef = ref(
         database,
         `users/user/${auth.currentUser.uid}/conversations`
@@ -196,13 +261,11 @@ export default function UserDetailPage() {
         `users/pro/${user.uid}/conversations`
       );
 
-      // Vérifier si une conversation existe déjà
       const userConversationsSnapshot = await get(userConversationsRef);
       let conversationId = null;
 
       if (userConversationsSnapshot.exists()) {
         const conversations = userConversationsSnapshot.val();
-        // Rechercher une conversation avec cet utilisateur
         for (const key in conversations) {
           if (conversations[key].recipientId === user.uid) {
             conversationId = key;
@@ -212,7 +275,6 @@ export default function UserDetailPage() {
       }
 
       if (conversationId) {
-        // Si la conversation existe, ajouter le message dans la conversation existante
         const messageRef = ref(
           database,
           `users/user/${auth.currentUser.uid}/conversations/${conversationId}/messages`
@@ -229,7 +291,6 @@ export default function UserDetailPage() {
 
         await update(ref(database), updates);
       } else {
-        // Si aucune conversation n'existe, créer une nouvelle conversation
         conversationId = push(userConversationsRef).key;
 
         const updates = {};
@@ -238,59 +299,37 @@ export default function UserDetailPage() {
         ] = {
           recipientId: user.uid,
           recipientName: user.displayName || "Professionnel",
-          messages: {
-            [push(ref(database)).key]: messageData,
-          },
+          messages: { [push(ref(database)).key]: messageData },
         };
         updates[`users/pro/${user.uid}/conversations/${conversationId}`] = {
           recipientId: auth.currentUser.uid,
           recipientName: auth.currentUser.displayName || "Utilisateur",
-          messages: {
-            [push(ref(database)).key]: messageData,
-          },
+          messages: { [push(ref(database)).key]: messageData },
         };
 
         await update(ref(database), updates);
       }
 
       setConfirmationMessage("Message envoyé avec succès !");
-      setMessage(""); // Réinitialisation du champ message
-      setOpenMessageDialog(false); // Ferme la boîte de dialogue
+      setMessage("");
+      setOpenMessageDialog(false);
     } catch (error) {
       console.error("Erreur lors de l'envoi du message :", error.message);
       setConfirmationMessage(`Erreur : ${error.message}`);
     }
   };
 
-  // Gestion des dialogues
-  const handleCalendarIconClick = () => {
-    setShowCalendarForm((prev) => !prev);
-  };
-
-  const handleMessageIconClick = () => {
-    setOpenMessageDialog(true);
-  };
-
-  const handleDialogClose = () => {
-    setOpenMessageDialog(false);
-  };
-
-  const handlePaymentIconClick = () => {
-    setShowPayPalPopup(true);
-  };
-
+  const handleCalendarIconClick = () => setShowCalendarForm((prev) => !prev);
+  const handleMessageIconClick = () => setOpenMessageDialog(true);
+  const handleDialogClose = () => setOpenMessageDialog(false);
+  const handlePaymentIconClick = () => setShowPayPalPopup(true);
   const handlePopupClose = () => {
     setShowPayPalPopup(false);
     setBuyerEmail("");
   };
 
-  if (loading) {
-    return <p>Chargement des données...</p>;
-  }
-
-  if (!user) {
-    return <p>Aucun utilisateur trouvé.</p>;
-  }
+  if (loading) return <p>Chargement des données...</p>;
+  if (!user) return <p>Aucun utilisateur trouvé.</p>;
 
   return (
     <div>
@@ -299,10 +338,12 @@ export default function UserDetailPage() {
         <Card
           sx={{ maxWidth: 400, margin: "auto", boxShadow: 3, borderRadius: 2 }}
         >
+          {/* force re-render si l’URL change */}
           <CardMedia
+            key={user?.image}
             component="img"
             height="100"
-            image={user.image || "https://via.placeholder.com/100"} // Remplacez par le chemin de votre image
+            image={user.image || "https://via.placeholder.com/100"}
             alt="Professional"
           />
           <div className={styles.cardcontent}>
@@ -336,6 +377,7 @@ export default function UserDetailPage() {
               </Typography>
             </CardContent>
           </div>
+
           <Stack
             direction="row"
             spacing={2}
@@ -358,6 +400,7 @@ export default function UserDetailPage() {
               <Payment sx={{ fontSize: 20 }} />
             </IconButton>
           </Stack>
+
           {showCalendarForm && (
             <CardContent>
               <Box sx={{ textAlign: "center" }}>
@@ -400,7 +443,7 @@ export default function UserDetailPage() {
             </CardContent>
           )}
         </Card>
-        {/* Dialog for PayPal Payment */}
+
         {showPayPalPopup && (
           <Dialog open={showPayPalPopup} onClose={handlePopupClose}>
             <DialogTitle>Paiement avec PayPal</DialogTitle>
@@ -421,9 +464,7 @@ export default function UserDetailPage() {
                     try {
                       const response = await fetch("/api/orders", {
                         method: "POST",
-                        headers: {
-                          "Content-Type": "application/json",
-                        },
+                        headers: { "Content-Type": "application/json" },
                         body: JSON.stringify({
                           amount: "60.00",
                           currency: "EUR",
@@ -432,8 +473,6 @@ export default function UserDetailPage() {
                       });
 
                       const orderData = await response.json();
-                      console.log("order data : ", orderData);
-
                       if (orderData.id) {
                         return orderData.id;
                       } else {
@@ -441,7 +480,6 @@ export default function UserDetailPage() {
                         const errorMessage = errorDetail
                           ? `${errorDetail.issue} ${errorDetail.description} (${orderData.debug_id})`
                           : JSON.stringify(orderData);
-
                         throw new Error(errorMessage);
                       }
                     } catch (error) {
@@ -457,9 +495,7 @@ export default function UserDetailPage() {
                         `/api/orders/${data.orderID}/capture`,
                         {
                           method: "POST",
-                          headers: {
-                            "Content-Type": "application/json",
-                          },
+                          headers: { "Content-Type": "application/json" },
                         }
                       );
 
@@ -476,13 +512,9 @@ export default function UserDetailPage() {
                         const transaction =
                           orderData.purchase_units[0].payments.captures[0];
                         setMessage(
-                          `Transaction ${transaction.status}: ${transaction.id}. See console for all available details`
+                          `Transaction ${transaction.status}: ${transaction.id}.`
                         );
-                        console.log(
-                          "Capture result",
-                          orderData,
-                          JSON.stringify(orderData, null, 2)
-                        );
+                        console.log("Capture result", orderData);
                       }
                     } catch (error) {
                       console.error(error);
@@ -506,7 +538,6 @@ export default function UserDetailPage() {
           </Dialog>
         )}
 
-        {/* Dialog for Sending a Message */}
         <Dialog open={openMessageDialog} onClose={handleDialogClose}>
           <DialogTitle>Envoyer un message</DialogTitle>
           <DialogContent>
