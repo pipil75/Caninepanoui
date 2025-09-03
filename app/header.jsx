@@ -30,7 +30,7 @@ const Header = () => {
           </li>
         </ul>
         <p className={styles.footerText}>
-          © 2024 Canin Épanoui. Tous droits réservés.
+          © 2025 Canin Épanoui. Tous droits réservés.
         </p>
       </nav>
     </header>
