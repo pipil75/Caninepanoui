@@ -229,7 +229,6 @@ export default function UserMessages() {
         )}
       </Box>
 
-      {/* Footer identique et collant */}
       <Box component="footer" sx={{ mt: "auto", width: "100%" }}>
         <Header />
       </Box>

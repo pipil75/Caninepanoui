@@ -145,7 +145,7 @@ export default function ProMessages() {
   }
 
   return (
-    // 👇 Wrapper pleine hauteur avec flex column pour sticky footer
+    // Wrapper pleine hauteur avec flex column pour sticky footer
     <Box
       sx={{
         minHeight: "100dvh",
@@ -251,7 +251,6 @@ export default function ProMessages() {
         )}
       </Box>
 
-      {/* Footer sticky : ton composant Header utilisé comme footer */}
       <Box component="footer" sx={{ mt: "auto", width: "100%" }}>
         <Header />
       </Box>

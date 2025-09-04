@@ -247,7 +247,6 @@ export default function ProfessionalAppointments() {
         )}
       </Box>
 
-      {/* Footer sticky */}
       <Box component="footer" sx={{ mt: "auto", width: "100%" }}>
         <Header />
       </Box>

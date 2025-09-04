@@ -25,7 +25,7 @@ import CookieAccepter from "../component/cookie/page";
 import Header from "../header";
 import CssBaseline from "@mui/material/CssBaseline";
 
-// ▼▼ helpers pour casser le cache et privilégier Storage ▼▼
+//  helpers pour casser le cache et privilégier Storage
 import {
   getStorage,
   ref as storageRef,
@@ -52,7 +52,7 @@ async function loadFreshProfileImage(userId, dbUrlOrPath) {
     `Images/${userId}/Profil.jpg`,
   ];
 
-  // 1) essayer Storage (profile.jpg)
+  //  essayer Storage (profile.jpg)
   for (const p of tryPaths) {
     try {
       const imgRef = storageRef(storage, p);
@@ -67,7 +67,7 @@ async function loadFreshProfileImage(userId, dbUrlOrPath) {
     }
   }
 
-  // 2) fallback DB (URL -> on ajoute v, path -> on résout + v)
+  //  fallback DB (URL -> on ajoute v, path -> on résout + v)
   if (dbUrlOrPath) {
     if (/^https?:\/\//i.test(dbUrlOrPath)) {
       return addVersionParam(dbUrlOrPath, Date.now());
@@ -85,7 +85,7 @@ async function loadFreshProfileImage(userId, dbUrlOrPath) {
 
   return "https://via.placeholder.com/150";
 }
-// ▲▲ helpers ▲▲
+//  helpers
 
 export default function MultiActionAreaCard() {
   const [loading, setLoading] = useState(true);
@@ -123,7 +123,7 @@ export default function MultiActionAreaCard() {
             .map(([id, user]) => ({ ...user, id, uid: user.uid || id }))
             .filter((user) => user.role === "pro");
 
-          // 🔥 charge l’URL fraîche depuis Storage pour chaque pro
+          // charge l’URL fraîche depuis Storage pour chaque pro
           const withFreshImages = await Promise.all(
             proUsers.map(async (u) => {
               const freshUrl = await loadFreshProfileImage(

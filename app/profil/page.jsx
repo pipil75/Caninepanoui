@@ -293,7 +293,6 @@ export default function Cardprofil() {
         </ThemeProvider>
       </Box>
 
-      {/* Footer (Header) — en dehors du ThemeProvider pour garder la même écriture partout */}
       <Box component="footer" sx={{ mt: "auto", width: "100%" }}>
         <Header />
       </Box>
