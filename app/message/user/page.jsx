@@ -11,8 +11,8 @@ import {
   Box,
   TextField,
   Button,
-  IconButton,
   Grid,
+  CssBaseline,
 } from "@mui/material";
 import { Delete, Reply } from "@mui/icons-material";
 import ResponsiveAppBar from "../../navbar";
@@ -21,7 +21,7 @@ import Header from "../../header";
 export default function UserMessages() {
   const [conversations, setConversations] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [reply, setReply] = useState({}); // Réponses par conversation ID
+  const [reply, setReply] = useState({});
 
   useEffect(() => {
     const fetchConversations = async () => {
@@ -42,8 +42,6 @@ export default function UserMessages() {
       onValue(conversationsRef, (snapshot) => {
         if (snapshot.exists()) {
           const data = snapshot.val();
-
-          // Transformer les données pour inclure les messages de chaque conversation
           const conversationsArray = Object.keys(data).map((key) => ({
             id: key,
             ...data[key],
@@ -54,7 +52,6 @@ export default function UserMessages() {
                 }))
               : [],
           }));
-          console.log("Conversations récupérées :", conversationsArray);
           setConversations(conversationsArray);
         } else {
           setConversations([]);
@@ -67,10 +64,7 @@ export default function UserMessages() {
   }, []);
 
   const handleReplyChange = (conversationId, value) => {
-    setReply((prev) => ({
-      ...prev,
-      [conversationId]: value,
-    }));
+    setReply((prev) => ({ ...prev, [conversationId]: value }));
   };
 
   const handleReplySubmit = async (conversation) => {
@@ -78,11 +72,9 @@ export default function UserMessages() {
     const recipientId = conversation.recipientId;
 
     if (!reply[conversationId]?.trim()) {
-      console.log("Message vide ou invalide :", reply[conversationId]);
       alert("La réponse ne peut pas être vide.");
       return;
     }
-
     if (!recipientId) {
       alert("L'identifiant du destinataire est manquant.");
       return;
@@ -96,36 +88,16 @@ export default function UserMessages() {
     };
 
     try {
-      // Crée une référence au chemin des messages
-      const messageRef = ref(
-        database,
-        `users/user/${auth.currentUser.uid}/conversations/${conversationId}/messages`
-      );
+      const fromPath = `users/user/${auth.currentUser.uid}/conversations/${conversationId}/messages`;
+      const newKey = push(ref(database, fromPath)).key;
 
-      // Utilise push pour créer une clé unique
-      const newMessageKey = push(messageRef).key;
+      const updates = {};
+      updates[`${fromPath}/${newKey}`] = messageData;
+      updates[
+        `users/pro/${recipientId}/conversations/${conversationId}/messages/${newKey}`
+      ] = messageData;
 
-      console.log("Clé générée pour le message :", newMessageKey);
-
-      if (!newMessageKey) {
-        throw new Error(
-          "Impossible de générer une clé pour le nouveau message."
-        );
-      }
-
-      // Prépare les mises à jour à écrire dans la base de données
-      const updates = {
-        [`users/user/${auth.currentUser.uid}/conversations/${conversationId}/messages/${newMessageKey}`]:
-          messageData,
-        [`users/pro/${recipientId}/conversations/${conversationId}/messages/${newMessageKey}`]:
-          messageData,
-      };
-
-      console.log("Mises à jour préparées pour Firebase :", updates);
-
-      // Applique les mises à jour
       await update(ref(database), updates);
-      console.log("Mises à jour effectuées avec succès !");
       setReply((prev) => ({ ...prev, [conversationId]: "" }));
     } catch (error) {
       console.error("Erreur lors de l'envoi de la réponse :", error);
@@ -134,33 +106,44 @@ export default function UserMessages() {
   };
 
   const handleDelete = async (conversationId) => {
-    const conversationRef = ref(
-      database,
-      `users/user/${auth.currentUser.uid}/conversations/${conversationId}`
-    );
     try {
-      await remove(conversationRef);
+      await remove(
+        ref(
+          database,
+          `users/user/${auth.currentUser.uid}/conversations/${conversationId}`
+        )
+      );
       alert("Conversation supprimée !");
     } catch (error) {
-      console.error(
-        "Erreur lors de la suppression de la conversation :",
-        error.message
-      );
+      console.error("Erreur lors de la suppression :", error.message);
       alert("Une erreur s'est produite lors de la suppression.");
     }
   };
 
-  if (loading) {
-    return <p>Chargement des conversations...</p>;
-  }
+  if (loading) return <p>Chargement des conversations...</p>;
 
   return (
-    <div>
+    // === Layout pleine hauteur avec footer collant ===
+    <Box
+      sx={{
+        minHeight: "100dvh",
+        display: "flex",
+        flexDirection: "column",
+        bgcolor: "background.default",
+      }}
+    >
+      <CssBaseline />
       <ResponsiveAppBar />
-      <Box sx={{ padding: 10 }}>
+
+      {/* Contenu principal */}
+      <Box
+        component="main"
+        sx={{ flex: 1, px: { xs: 2, md: 8 }, py: { xs: 3, md: 6 } }}
+      >
         <Typography variant="h4" gutterBottom>
           Conversations Utilisateur
         </Typography>
+
         {conversations.length === 0 ? (
           <Typography variant="h6" color="text.secondary">
             Aucune conversation trouvée.
@@ -175,17 +158,17 @@ export default function UserMessages() {
                       Avec : {conversation.recipientName}
                     </Typography>
 
-                    {/* Affichage des messages */}
-                    <Box sx={{ marginTop: 10 }}>
+                    {/* Messages */}
+                    <Box sx={{ mt: 2 }}>
                       <Typography variant="subtitle1">Messages :</Typography>
                       {conversation.messages.map((msg) => (
                         <Box
                           key={msg.id}
                           sx={{
                             border: "1px solid #ddd",
-                            borderRadius: "8px",
-                            padding: "8px",
-                            marginBottom: "8px",
+                            borderRadius: 2,
+                            p: 1,
+                            mb: 1,
                             backgroundColor:
                               msg.senderId === auth.currentUser.uid
                                 ? "#dcf8c6"
@@ -206,8 +189,8 @@ export default function UserMessages() {
                       ))}
                     </Box>
 
-                    {/* Formulaire de réponse */}
-                    <Box sx={{ marginTop: 2 }}>
+                    {/* Répondre */}
+                    <Box sx={{ mt: 2 }}>
                       <TextField
                         fullWidth
                         size="small"
@@ -217,7 +200,7 @@ export default function UserMessages() {
                           handleReplyChange(conversation.id, e.target.value)
                         }
                       />
-                      <Box sx={{ marginTop: 1, display: "flex", gap: 1 }}>
+                      <Box sx={{ mt: 1, display: "flex", gap: 1 }}>
                         <Button
                           variant="contained"
                           color="primary"
@@ -244,10 +227,12 @@ export default function UserMessages() {
             ))}
           </Grid>
         )}
-        <Box sx={{ width: "100%", mt: 4 }}>
-          <Header />
-        </Box>
       </Box>
-    </div>
+
+      {/* Footer identique et collant */}
+      <Box component="footer" sx={{ mt: "auto", width: "100%" }}>
+        <Header />
+      </Box>
+    </Box>
   );
 }

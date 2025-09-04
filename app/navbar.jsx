@@ -11,8 +11,11 @@ import {
   Menu,
   MenuItem,
   IconButton,
+  ThemeProvider,
+  createTheme,
+  Container,
 } from "@mui/material";
-import { createTheme, ThemeProvider } from "@mui/material/styles";
+import MenuIcon from "@mui/icons-material/Menu";
 
 import { auth, database, storage } from "../lib/firebase";
 import { ref as dbRef, get } from "firebase/database";
@@ -26,20 +29,19 @@ import {
 
 const theme = createTheme({
   palette: {
-    primary: { main: "#847774" }, // fond comme le footer
-    secondary: { main: "#FCFEF7" }, // texte clair
+    primary: { main: "#847774" },
+    secondary: { main: "#FCFEF7" },
   },
-  typography: {
-    button: { textTransform: "none", fontWeight: 700 },
-  },
+  typography: { button: { textTransform: "none", fontWeight: 700 } },
 });
 
 export default function ResponsiveAppBar() {
   const router = useRouter();
 
-  const [anchorEl, setAnchorEl] = useState(null);
   const [role, setRole] = useState(null);
   const [profileImage, setProfileImage] = useState(null);
+  const [avatarMenuEl, setAvatarMenuEl] = useState(null);
+  const [mobileMenuEl, setMobileMenuEl] = useState(null);
 
   useEffect(() => {
     const user = auth.currentUser;
@@ -55,12 +57,10 @@ export default function ResponsiveAppBar() {
       .catch(() => setProfileImage(null));
   }, []);
 
-  const handleMenuOpen = (e) => setAnchorEl(e.currentTarget);
-  const handleMenuClose = () => setAnchorEl(null);
-
   const handleNavigate = (path) => {
     router.push(path);
-    handleMenuClose();
+    setAvatarMenuEl(null);
+    setMobileMenuEl(null);
   };
 
   const handleLogout = async () => {
@@ -93,93 +93,138 @@ export default function ResponsiveAppBar() {
     { label: "Mes rendez-vous", path: "/rdvuser", visible: role === "user" },
   ];
 
-  // Liens compacts (même typo que le footer)
   const linkSx = {
     color: "secondary.main",
     fontWeight: 700,
-    fontSize: { xs: "0.9rem", md: "1rem" },
+    fontSize: { xs: "0.95rem", md: "1rem" },
     "&:hover": { opacity: 0.9, bgcolor: "transparent" },
   };
 
   return (
     <ThemeProvider theme={theme}>
       <AppBar position="static" sx={{ bgcolor: "primary.main" }}>
-        <Toolbar
-          variant="dense"
-          sx={{
-            minHeight: 52,
-            px: { xs: 1.5, md: 2 },
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            gap: 1,
-          }}
-        >
-          {/* Logo à gauche (compact) */}
-          <Box
-            sx={{ display: "flex", alignItems: "center", cursor: "pointer" }}
-            onClick={() =>
-              handleNavigate(role === "pro" ? "/porfilepro" : "/accueil")
-            }
-          >
-            <img src="/images/blob.png" alt="Logo" style={{ height: 38 }} />
-          </Box>
-
-          {/* CENTRE : liens répartis en space-around */}
-          <Box
+        <Container maxWidth="lg" disableGutters>
+          <Toolbar
+            // plus d’air en mobile
             sx={{
-              flex: 1,
+              minHeight: { xs: 56, md: 60 },
+              px: { xs: 1.25, md: 2.5 },
               display: "flex",
-              justifyContent: "space-around", // <= ce que tu voulais
               alignItems: "center",
-              mx: { xs: 1, md: 2 },
+              gap: { xs: 1, md: 2 },
             }}
           >
-            {menuItems.map(
-              (item, i) =>
-                (item.visible === undefined || item.visible) && (
-                  <Button
-                    key={i}
-                    onClick={() => handleNavigate(item.path)}
-                    sx={linkSx}
-                    disableRipple
-                  >
-                    {item.label}
-                  </Button>
-                )
-            )}
-            <Button onClick={handleLogout} sx={linkSx} disableRipple>
-              Déconnexion
-            </Button>
-            <Button onClick={handleDeleteAccount} sx={linkSx} disableRipple>
-              Supprimer mon compte
-            </Button>
-          </Box>
+            {/* Groupe gauche : hamburger (xs) + logo */}
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1.2 }}>
+              <IconButton
+                aria-label="menu"
+                onClick={(e) => setMobileMenuEl(e.currentTarget)}
+                sx={{
+                  display: { xs: "inline-flex", md: "none" },
+                  color: "secondary.main",
+                }}
+              >
+                <MenuIcon />
+              </IconButton>
 
-          {/* Avatar à droite (compact) */}
-          <IconButton onClick={handleMenuOpen} sx={{ ml: 0.5 }}>
-            <Avatar
-              src={profileImage || undefined}
-              alt="Avatar"
-              sx={{ width: 38, height: 38 }}
-            />
-          </IconButton>
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  cursor: "pointer",
+                }}
+                onClick={() =>
+                  handleNavigate(role === "pro" ? "/porfilepro" : "/accueil")
+                }
+              >
+                <img src="/images/blob.png" alt="Logo" style={{ height: 34 }} />
+              </Box>
+            </Box>
 
-          <Menu
-            anchorEl={anchorEl}
-            open={Boolean(anchorEl)}
-            onClose={handleMenuClose}
-          >
-            <MenuItem
-              onClick={() =>
-                handleNavigate(role === "pro" ? "/porfilepro" : "/profil")
-              }
+            {/* NAV centre (desktop) : space-around */}
+            <Box
+              sx={{
+                flex: 1,
+                display: { xs: "none", md: "flex" },
+                justifyContent: "space-around",
+                alignItems: "center",
+                mx: 2,
+              }}
             >
-              Mon profil
-            </MenuItem>
-            <MenuItem onClick={handleLogout}>Déconnexion</MenuItem>
-          </Menu>
-        </Toolbar>
+              {menuItems.map(
+                (item, i) =>
+                  (item.visible === undefined || item.visible) && (
+                    <Button
+                      key={i}
+                      onClick={() => handleNavigate(item.path)}
+                      sx={linkSx}
+                      disableRipple
+                    >
+                      {item.label}
+                    </Button>
+                  )
+              )}
+              <Button onClick={handleLogout} sx={linkSx} disableRipple>
+                Déconnexion
+              </Button>
+              <Button onClick={handleDeleteAccount} sx={linkSx} disableRipple>
+                Supprimer mon compte
+              </Button>
+            </Box>
+
+            {/* Spacer qui pousse l'avatar à droite uniquement en mobile */}
+            <Box sx={{ flexGrow: 1, display: { xs: "block", md: "none" } }} />
+
+            {/* Avatar à droite */}
+            <IconButton
+              onClick={(e) => setAvatarMenuEl(e.currentTarget)}
+              sx={{ ml: 0.5 }}
+            >
+              <Avatar
+                src={profileImage || undefined}
+                alt="Avatar"
+                sx={{ width: 34, height: 34 }}
+              />
+            </IconButton>
+
+            {/* Menu avatar */}
+            <Menu
+              anchorEl={avatarMenuEl}
+              open={Boolean(avatarMenuEl)}
+              onClose={() => setAvatarMenuEl(null)}
+            >
+              <MenuItem
+                onClick={() =>
+                  handleNavigate(role === "pro" ? "/porfilepro" : "/profil")
+                }
+              >
+                Mon profil
+              </MenuItem>
+              <MenuItem onClick={handleLogout}>Déconnexion</MenuItem>
+            </Menu>
+
+            {/* Menu mobile (hamburger) */}
+            <Menu
+              anchorEl={mobileMenuEl}
+              open={Boolean(mobileMenuEl)}
+              onClose={() => setMobileMenuEl(null)}
+              PaperProps={{ sx: { minWidth: 230 } }}
+            >
+              {menuItems.map(
+                (item, i) =>
+                  (item.visible === undefined || item.visible) && (
+                    <MenuItem key={i} onClick={() => handleNavigate(item.path)}>
+                      {item.label}
+                    </MenuItem>
+                  )
+              )}
+              <MenuItem onClick={handleLogout}>Déconnexion</MenuItem>
+              <MenuItem onClick={handleDeleteAccount}>
+                Supprimer mon compte
+              </MenuItem>
+            </Menu>
+          </Toolbar>
+        </Container>
       </AppBar>
     </ThemeProvider>
   );
