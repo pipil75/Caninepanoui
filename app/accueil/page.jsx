@@ -24,6 +24,69 @@ import {
 import CookieAccepter from "../component/cookie/page";
 import Header from "../header";
 import CssBaseline from "@mui/material/CssBaseline";
+
+// ▼▼ helpers pour casser le cache et privilégier Storage ▼▼
+import {
+  getStorage,
+  ref as storageRef,
+  getDownloadURL,
+  getMetadata,
+} from "firebase/storage";
+
+function addVersionParam(baseUrl, version) {
+  try {
+    const u = new URL(baseUrl);
+    u.searchParams.set("v", String(version || Date.now()));
+    return u.toString();
+  } catch {
+    const sep = baseUrl.includes("?") ? "&" : "?";
+    return `${baseUrl}${sep}v=${encodeURIComponent(version || Date.now())}`;
+  }
+}
+
+async function loadFreshProfileImage(userId, dbUrlOrPath) {
+  const storage = getStorage();
+  const tryPaths = [
+    `images/${userId}/profile.jpg`, // minuscule (ton dossier)
+    `Images/${userId}/profile.jpg`,
+    `Images/${userId}/Profil.jpg`,
+  ];
+
+  // 1) essayer Storage (profile.jpg)
+  for (const p of tryPaths) {
+    try {
+      const imgRef = storageRef(storage, p);
+      const [url, meta] = await Promise.all([
+        getDownloadURL(imgRef),
+        getMetadata(imgRef),
+      ]);
+      const v = meta?.generation || meta?.updated || Date.now().toString();
+      return addVersionParam(url, v);
+    } catch {
+      // on essaye la variante suivante
+    }
+  }
+
+  // 2) fallback DB (URL -> on ajoute v, path -> on résout + v)
+  if (dbUrlOrPath) {
+    if (/^https?:\/\//i.test(dbUrlOrPath)) {
+      return addVersionParam(dbUrlOrPath, Date.now());
+    }
+    try {
+      const imgRef = storageRef(storage, dbUrlOrPath);
+      const [url, meta] = await Promise.all([
+        getDownloadURL(imgRef),
+        getMetadata(imgRef),
+      ]);
+      const v = meta?.generation || meta?.updated || Date.now().toString();
+      return addVersionParam(url, v);
+    } catch {}
+  }
+
+  return "https://via.placeholder.com/150";
+}
+// ▲▲ helpers ▲▲
+
 export default function MultiActionAreaCard() {
   const [loading, setLoading] = useState(true);
   const [users, setUsers] = useState([]);
@@ -55,10 +118,23 @@ export default function MultiActionAreaCard() {
         const snapshot = await get(usersRef);
         if (snapshot.exists()) {
           const data = snapshot.val();
+
           const proUsers = Object.entries(data)
-            .map(([id, user]) => ({ ...user, id }))
+            .map(([id, user]) => ({ ...user, id, uid: user.uid || id }))
             .filter((user) => user.role === "pro");
-          setUsers(proUsers);
+
+          // 🔥 charge l’URL fraîche depuis Storage pour chaque pro
+          const withFreshImages = await Promise.all(
+            proUsers.map(async (u) => {
+              const freshUrl = await loadFreshProfileImage(
+                u.id,
+                u.image || u.imagePath
+              );
+              return { ...u, image: freshUrl };
+            })
+          );
+
+          setUsers(withFreshImages);
         } else {
           setUsers([]);
         }
@@ -80,7 +156,6 @@ export default function MultiActionAreaCard() {
       sx={{
         backgroundColor: "#FCFEF7",
         minHeight: "100vh",
-
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
@@ -113,6 +188,7 @@ export default function MultiActionAreaCard() {
           bienveillance.
         </Typography>
       </Box>
+
       <Grid
         container
         spacing={4}
@@ -135,6 +211,7 @@ export default function MultiActionAreaCard() {
               >
                 <Box
                   component="img"
+                  key={user.image} // force re-render si l’URL change
                   src={user.image || "https://via.placeholder.com/150"}
                   alt={user.name}
                   sx={{
@@ -159,7 +236,7 @@ export default function MultiActionAreaCard() {
                 </CardContent>
                 <CardActions sx={{ justifyContent: "center" }}>
                   <Button
-                    onClick={() => handleOpenUserDetail(user.uid)}
+                    onClick={() => handleOpenUserDetail(user.id)}
                     variant="contained"
                     sx={{
                       backgroundColor: "#847774",
@@ -181,6 +258,7 @@ export default function MultiActionAreaCard() {
           </Typography>
         )}
       </Grid>
+
       <Box sx={{ width: "100%", mt: 4 }}>
         <Header />
       </Box>
