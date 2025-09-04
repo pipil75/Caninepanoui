@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import {
   AppBar,
@@ -18,13 +18,19 @@ import {
 import MenuIcon from "@mui/icons-material/Menu";
 
 import { auth, database, storage } from "../lib/firebase";
-import { ref as dbRef, get, update as dbUpdate } from "firebase/database"; // ⬅️ update importé
+import {
+  ref as dbRef,
+  get,
+  update as dbUpdate,
+  onValue,
+} from "firebase/database";
 import {
   ref as storageRef,
   getDownloadURL,
   listAll,
   deleteObject,
-} from "firebase/storage"; // ⬅️ pour vider le dossier image (optionnel)
+  getMetadata,
+} from "firebase/storage";
 import {
   signOut,
   deleteUser,
@@ -33,34 +39,120 @@ import {
 } from "firebase/auth";
 
 const theme = createTheme({
-  palette: {
-    primary: { main: "#847774" },
-    secondary: { main: "#FCFEF7" },
-  },
+  palette: { primary: { main: "#847774" }, secondary: { main: "#FCFEF7" } },
   typography: { button: { textTransform: "none", fontWeight: 700 } },
 });
+
+// Ajoute/remplace ?v=... pour casser le cache
+function addV(url, v) {
+  try {
+    const u = new URL(url);
+    u.searchParams.set("v", String(v || Date.now()));
+    return u.toString();
+  } catch {
+    const sep = url.includes("?") ? "&" : "?";
+    return `${url}${sep}v=${encodeURIComponent(v || Date.now())}`;
+  }
+}
+
+// Essaie en priorité la photo "profile/profil" du Storage, sinon l’URL stockée en DB
+async function resolveAvatarUrl({ uid, dbUrlOrPath }) {
+  const candidates = [
+    `images/${uid}/profile.jpg`,
+    `images/${uid}/profile.png`,
+    `Images/${uid}/profile.jpg`,
+    `Images/${uid}/profil.png`, // si tu as nommé "profil.png"
+  ];
+
+  // 1) Priorité : fichiers fixes dans le Storage
+  for (const p of candidates) {
+    try {
+      const r = storageRef(storage, p);
+      const [url, meta] = await Promise.all([
+        getDownloadURL(r),
+        getMetadata(r).catch(() => ({})),
+      ]);
+      const v = meta?.generation || meta?.updated || Date.now();
+      return addV(url, v);
+    } catch {
+      // on tente le prochain
+    }
+  }
+
+  // 2) Fallback : ce qui est en DB (URL complète)
+  if (dbUrlOrPath && /^https?:\/\//i.test(dbUrlOrPath)) {
+    return addV(dbUrlOrPath, Date.now());
+  }
+
+  // 3) Fallback : ce qui est en DB (chemin Storage)
+  if (dbUrlOrPath && !/^https?:\/\//i.test(dbUrlOrPath)) {
+    try {
+      const r = storageRef(storage, dbUrlOrPath);
+      const [url, meta] = await Promise.all([
+        getDownloadURL(r),
+        getMetadata(r).catch(() => ({})),
+      ]);
+      const v = meta?.generation || meta?.updated || Date.now();
+      return addV(url, v);
+    } catch {}
+  }
+
+  return ""; // pas d’avatar
+}
 
 export default function ResponsiveAppBar() {
   const router = useRouter();
 
   const [role, setRole] = useState(null);
   const [profileImage, setProfileImage] = useState(null);
+  const [dbImageVal, setDbImageVal] = useState(null); // valeur DB users/{uid}/image
   const [avatarMenuEl, setAvatarMenuEl] = useState(null);
   const [mobileMenuEl, setMobileMenuEl] = useState(null);
+
+  // Recalcule et met à jour l’avatar
+  const refreshAvatar = useCallback(async () => {
+    const user = auth.currentUser;
+    if (!user) return;
+    const url = await resolveAvatarUrl({
+      uid: user.uid,
+      dbUrlOrPath: dbImageVal,
+    });
+    setProfileImage(url || null);
+  }, [dbImageVal]);
 
   useEffect(() => {
     const user = auth.currentUser;
     if (!user) return;
 
+    // Rôle (lecture simple)
     get(dbRef(database, `users/${user.uid}/role`))
       .then((snap) => snap.exists() && setRole(snap.val()))
       .catch(() => setRole(null));
 
-    const imgRef = storageRef(storage, `images/${user.uid}/profile.jpg`);
-    getDownloadURL(imgRef)
-      .then((url) => setProfileImage(url))
-      .catch(() => setProfileImage(null));
-  }, []);
+    // Écoute en temps réel du champ image (URL ou chemin)
+    const imgRef = dbRef(database, `users/${user.uid}/image`);
+    const off = onValue(imgRef, (snap) => {
+      const val = snap.exists() ? snap.val() : null;
+      setDbImageVal(val);
+    });
+
+    // Premier rendu : on force une résolution (avant même un event DB)
+    refreshAvatar();
+
+    // Rafraîchir quand l’onglet reprend le focus (utile si seul le Storage a changé)
+    const onFocus = () => refreshAvatar();
+    window.addEventListener("focus", onFocus);
+
+    return () => {
+      off();
+      window.removeEventListener("focus", onFocus);
+    };
+  }, [refreshAvatar]);
+
+  // Met à jour l’avatar dès que la DB change
+  useEffect(() => {
+    refreshAvatar();
+  }, [dbImageVal, refreshAvatar]);
 
   const handleNavigate = (path) => {
     router.push(path);
@@ -73,41 +165,33 @@ export default function ResponsiveAppBar() {
     router.push("/connexion");
   };
 
-  // ⬇️ ⬇️ SUPPRESSION TOTALE : DB + Storage (optionnel) + Auth
+  // (facultatif) suppression DB + Storage + Auth
   const handleDeleteAccount = async () => {
     const user = auth.currentUser;
     if (!user) return alert("Aucun utilisateur connecté.");
-
     const password = prompt("Entrez votre mot de passe pour confirmer :");
     if (!password) return;
 
     try {
       const credential = EmailAuthProvider.credential(user.email, password);
       await reauthenticateWithCredential(user, credential);
-
       const uid = user.uid;
 
-      // 1) Supprimer les données dans la Realtime DB (multi-path update à null)
+      // Supprimer branches DB
       const updates = {};
-      updates[`users/${uid}`] = null; // profil + sous-noeuds (appointments, etc.)
-      updates[`users/user/${uid}`] = null; // conversations côté "user"
-      updates[`users/pro/${uid}`] = null; // conversations côté "pro"
+      updates[`users/${uid}`] = null;
+      updates[`users/user/${uid}`] = null;
+      updates[`users/pro/${uid}`] = null;
       await dbUpdate(dbRef(database), updates);
 
-      // 2) (Optionnel) Vider le dossier images/{uid} dans Storage
+      // Nettoyer Storage (optionnel)
       try {
         const folderRef = storageRef(storage, `images/${uid}`);
         const res = await listAll(folderRef);
         await Promise.all(res.items.map((it) => deleteObject(it)));
-      } catch (e) {
-        // Non bloquant si l'utilisateur n'a pas d'images
-        console.warn("Nettoyage Storage ignoré :", e?.message || e);
-      }
+      } catch {}
 
-      // 3) Supprimer le compte Auth
       await deleteUser(user);
-
-      // 4) Déconnexion + redirection
       await signOut(auth);
       router.push("/connexion");
       alert("Compte et données supprimés.");
@@ -115,7 +199,6 @@ export default function ResponsiveAppBar() {
       alert("Erreur : " + e.message);
     }
   };
-  // ⬆️ ⬆️
 
   const menuItems = [
     { label: "Accueil", path: role === "pro" ? "/porfilepro" : "/accueil" },
@@ -144,7 +227,7 @@ export default function ResponsiveAppBar() {
               gap: { xs: 1, md: 2 },
             }}
           >
-            {/* Groupe gauche : hamburger + logo */}
+            {/* Gauche : hamburger + logo */}
             <Box sx={{ display: "flex", alignItems: "center", gap: 1.2 }}>
               <IconButton
                 aria-label="menu"
