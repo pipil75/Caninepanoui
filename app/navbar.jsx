@@ -18,8 +18,13 @@ import {
 import MenuIcon from "@mui/icons-material/Menu";
 
 import { auth, database, storage } from "../lib/firebase";
-import { ref as dbRef, get } from "firebase/database";
-import { ref as storageRef, getDownloadURL } from "firebase/storage";
+import { ref as dbRef, get, update as dbUpdate } from "firebase/database"; // ⬅️ update importé
+import {
+  ref as storageRef,
+  getDownloadURL,
+  listAll,
+  deleteObject,
+} from "firebase/storage"; // ⬅️ pour vider le dossier image (optionnel)
 import {
   signOut,
   deleteUser,
@@ -68,23 +73,49 @@ export default function ResponsiveAppBar() {
     router.push("/connexion");
   };
 
+  // ⬇️ ⬇️ SUPPRESSION TOTALE : DB + Storage (optionnel) + Auth
   const handleDeleteAccount = async () => {
     const user = auth.currentUser;
     if (!user) return alert("Aucun utilisateur connecté.");
+
     const password = prompt("Entrez votre mot de passe pour confirmer :");
     if (!password) return;
 
     try {
       const credential = EmailAuthProvider.credential(user.email, password);
       await reauthenticateWithCredential(user, credential);
+
+      const uid = user.uid;
+
+      // 1) Supprimer les données dans la Realtime DB (multi-path update à null)
+      const updates = {};
+      updates[`users/${uid}`] = null; // profil + sous-noeuds (appointments, etc.)
+      updates[`users/user/${uid}`] = null; // conversations côté "user"
+      updates[`users/pro/${uid}`] = null; // conversations côté "pro"
+      await dbUpdate(dbRef(database), updates);
+
+      // 2) (Optionnel) Vider le dossier images/{uid} dans Storage
+      try {
+        const folderRef = storageRef(storage, `images/${uid}`);
+        const res = await listAll(folderRef);
+        await Promise.all(res.items.map((it) => deleteObject(it)));
+      } catch (e) {
+        // Non bloquant si l'utilisateur n'a pas d'images
+        console.warn("Nettoyage Storage ignoré :", e?.message || e);
+      }
+
+      // 3) Supprimer le compte Auth
       await deleteUser(user);
+
+      // 4) Déconnexion + redirection
       await signOut(auth);
       router.push("/connexion");
-      alert("Compte supprimé.");
+      alert("Compte et données supprimés.");
     } catch (e) {
       alert("Erreur : " + e.message);
     }
   };
+  // ⬆️ ⬆️
 
   const menuItems = [
     { label: "Accueil", path: role === "pro" ? "/porfilepro" : "/accueil" },
@@ -105,7 +136,6 @@ export default function ResponsiveAppBar() {
       <AppBar position="static" sx={{ bgcolor: "primary.main" }}>
         <Container maxWidth="lg" disableGutters>
           <Toolbar
-            // plus d’air en mobile
             sx={{
               minHeight: { xs: 56, md: 60 },
               px: { xs: 1.25, md: 2.5 },
@@ -114,7 +144,7 @@ export default function ResponsiveAppBar() {
               gap: { xs: 1, md: 2 },
             }}
           >
-            {/* Groupe gauche : hamburger (xs) + logo */}
+            {/* Groupe gauche : hamburger + logo */}
             <Box sx={{ display: "flex", alignItems: "center", gap: 1.2 }}>
               <IconButton
                 aria-label="menu"
@@ -141,7 +171,7 @@ export default function ResponsiveAppBar() {
               </Box>
             </Box>
 
-            {/* NAV centre (desktop) : space-around */}
+            {/* Centre (desktop) */}
             <Box
               sx={{
                 flex: 1,
@@ -172,10 +202,10 @@ export default function ResponsiveAppBar() {
               </Button>
             </Box>
 
-            {/* Spacer qui pousse l'avatar à droite uniquement en mobile */}
+            {/* Spacer mobile */}
             <Box sx={{ flexGrow: 1, display: { xs: "block", md: "none" } }} />
 
-            {/* Avatar à droite */}
+            {/* Avatar */}
             <IconButton
               onClick={(e) => setAvatarMenuEl(e.currentTarget)}
               sx={{ ml: 0.5 }}
@@ -203,7 +233,7 @@ export default function ResponsiveAppBar() {
               <MenuItem onClick={handleLogout}>Déconnexion</MenuItem>
             </Menu>
 
-            {/* Menu mobile (hamburger) */}
+            {/* Menu mobile */}
             <Menu
               anchorEl={mobileMenuEl}
               open={Boolean(mobileMenuEl)}
