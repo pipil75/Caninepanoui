@@ -83,16 +83,34 @@ export default function AdminPanel() {
       .catch((error) => console.error("Error signing out: ", error));
   };
 
-  const handleDelete = (userId) => {
-    const userRef = ref(getDatabase(app), `users/${userId}`);
-    remove(userRef)
-      .then(() => {
-        alert("User deleted successfully");
-        fetchData(); // Rafraîchir les données après suppression
-      })
-      .catch((error) => {
-        console.error("Error deleting user: ", error);
+  const handleDelete = async (userId) => {
+    try {
+      const token = await auth.currentUser.getIdToken(true);
+
+      const res = await fetch("/api/mail/admin/delete-user", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ uid: userId }),
       });
+
+      // Empêche l'erreur "Unexpected token '<'" si jamais ce n'est pas du JSON
+      const text = await res.text();
+      const isJson = (res.headers.get("content-type") || "").includes(
+        "application/json"
+      );
+      const data = isJson ? JSON.parse(text) : null;
+
+      if (!res.ok) throw new Error(data?.error || text || `HTTP ${res.status}`);
+
+      alert("Utilisateur supprimé (Auth + DB).");
+      setData((prev) => prev.filter((u) => u.id !== userId));
+    } catch (error) {
+      console.error(error);
+      alert("Suppression impossible : " + error.message);
+    }
   };
 
   const handleEdit = (user) => {
