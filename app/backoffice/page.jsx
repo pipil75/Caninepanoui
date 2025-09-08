@@ -7,7 +7,7 @@ import {
   GoogleAuthProvider,
   signOut,
 } from "firebase/auth";
-import { getDatabase, ref, onValue, remove, update } from "firebase/database";
+import { getDatabase, ref, onValue, update, off } from "firebase/database";
 import {
   Container,
   Button,
@@ -19,6 +19,7 @@ import {
   Stack,
   Divider,
 } from "@mui/material";
+
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
   authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
@@ -33,39 +34,78 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const provider = new GoogleAuthProvider();
+const db = getDatabase(app);
+
+// ——— utils ———
+const sanitizeForRTDB = (obj) =>
+  Object.fromEntries(Object.entries(obj).filter(([_, v]) => v !== undefined));
 
 export default function AdminPanel() {
   const [user, setUser] = useState(null);
   const [data, setData] = useState([]);
   const [errorMessage, setErrorMessage] = useState("");
-  const [editingUser, setEditingUser] = useState(null); // Pour gérer l'utilisateur en cours d'édition
+  const [editingUser, setEditingUser] = useState(null);
+  const [busy, setBusy] = useState(false);
 
   useEffect(() => {
-    if (user) {
-      if (user.email !== "aprilraphaella75@gmail.com") {
-        setErrorMessage("vous n'etes pas admin.");
-      } else {
-        fetchData(); // Récupère les données uniquement si l'admin est connecté
-      }
+    if (!user) return;
+
+    if (user.email !== "aprilraphaella75@gmail.com") {
+      setErrorMessage("vous n'etes pas admin.");
+      return;
     }
+    setErrorMessage("");
+
+    const dbRef = ref(db, "users");
+    const unsubscribe = onValue(
+      dbRef,
+      (snapshot) => {
+        if (snapshot.exists()) {
+          const items = snapshot.val();
+          const itemsArray = Object.entries(items).map(([id, value]) => ({
+            id,
+            ...(value || {}),
+          }));
+          setData(itemsArray);
+        } else {
+          setData([]);
+        }
+      },
+      (err) => {
+        setErrorMessage(
+          "Erreur DB: " + (err?.code || err?.message || String(err))
+        );
+      }
+    );
+
+    // cleanup listener
+    return () => {
+      off(dbRef);
+      if (typeof unsubscribe === "function") unsubscribe();
+    };
   }, [user]);
 
   const fetchData = () => {
-    const dbRef = ref(getDatabase(app), "users");
-    onValue(dbRef, (snapshot) => {
-      if (snapshot.exists()) {
-        const items = snapshot.val();
-
-        // Transformer les données en tableau
-        const itemsArray = Object.entries(items).map(([id, value]) => ({
-          id,
-          ...value,
-        }));
-        setData(itemsArray); // Mettre à jour l'état avec les données des utilisateurs
-      } else {
-        setData([]);
-      }
-    });
+    const dbRef = ref(db, "users");
+    onValue(
+      dbRef,
+      (snapshot) => {
+        if (snapshot.exists()) {
+          const items = snapshot.val();
+          const itemsArray = Object.entries(items).map(([id, value]) => ({
+            id,
+            ...(value || {}),
+          }));
+          setData(itemsArray);
+        } else {
+          setData([]);
+        }
+      },
+      (err) =>
+        setErrorMessage(
+          "Erreur DB: " + (err?.code || err?.message || String(err))
+        )
+    );
   };
 
   const handleLogin = async () => {
@@ -74,6 +114,7 @@ export default function AdminPanel() {
       setUser(result.user);
     } catch (error) {
       console.error("Authentication failed: ", error);
+      setErrorMessage("Échec auth : " + (error?.message || ""));
     }
   };
 
@@ -86,7 +127,6 @@ export default function AdminPanel() {
   const handleDelete = async (userId) => {
     try {
       const token = await auth.currentUser.getIdToken(true);
-
       const res = await fetch("/api/mail/admin/delete-user", {
         method: "POST",
         headers: {
@@ -96,14 +136,14 @@ export default function AdminPanel() {
         body: JSON.stringify({ uid: userId }),
       });
 
-      // Empêche l'erreur "Unexpected token '<'" si jamais ce n'est pas du JSON
       const text = await res.text();
       const isJson = (res.headers.get("content-type") || "").includes(
         "application/json"
       );
-      const data = isJson ? JSON.parse(text) : null;
+      const payload = isJson ? JSON.parse(text) : null;
 
-      if (!res.ok) throw new Error(data?.error || text || `HTTP ${res.status}`);
+      if (!res.ok)
+        throw new Error(payload?.error || text || `HTTP ${res.status}`);
 
       alert("Utilisateur supprimé (Auth + DB).");
       setData((prev) => prev.filter((u) => u.id !== userId));
@@ -113,28 +153,37 @@ export default function AdminPanel() {
     }
   };
 
-  const handleEdit = (user) => {
-    setEditingUser(user); // Définir l'utilisateur à modifier
+  const handleEdit = (u) => {
+    // normalise pour éviter undefined -> RTDB
+    setEditingUser({
+      id: u.id,
+      name: u.name ?? "",
+      email: u.email ?? "",
+      description: u.description ?? "",
+      role: u.role ?? "",
+    });
   };
 
-  const handleSaveEdit = () => {
+  const handleSaveEdit = async () => {
     if (!editingUser) return;
+    setBusy(true);
+    try {
+      const { id, ...rest } = editingUser;
 
-    const userRef = ref(getDatabase(app), `users/${editingUser.id}`);
-    update(userRef, {
-      name: editingUser.name,
-      email: editingUser.email,
-      description: editingUser.description,
-      role: editingUser.role,
-    })
-      .then(() => {
-        alert("User updated successfully");
-        setEditingUser(null); // Réinitialiser l'édition
-        fetchData(); // Rafraîchir les données après modification
-      })
-      .catch((error) => {
-        console.error("Error updating user: ", error);
-      });
+      // supprime toutes les clés undefined (RTDB refuse undefined)
+      let updates = sanitizeForRTDB(rest);
+
+      s;
+
+      await update(ref(db, `users/${id}`), updates);
+      alert("User updated successfully");
+      setEditingUser(null);
+    } catch (error) {
+      console.error("Error updating user: ", error);
+      alert("Mise à jour impossible : " + (error?.message || error));
+    } finally {
+      setBusy(false);
+    }
   };
 
   return (
@@ -177,25 +226,30 @@ export default function AdminPanel() {
                         <TextField
                           fullWidth
                           label={field.charAt(0).toUpperCase() + field.slice(1)}
-                          value={editingUser[field] || ""}
+                          value={editingUser[field] ?? ""} // jamais undefined à l'affichage
                           onChange={(e) =>
-                            setEditingUser({
-                              ...editingUser,
+                            setEditingUser((prev) => ({
+                              ...prev,
                               [field]: e.target.value,
-                            })
+                            }))
                           }
                         />
                       </Grid>
                     ))}
                     <Grid item xs={12}>
                       <Stack direction="row" spacing={2}>
-                        <Button variant="contained" onClick={handleSaveEdit}>
-                          Enregistrer
+                        <Button
+                          variant="contained"
+                          onClick={handleSaveEdit}
+                          disabled={busy}
+                        >
+                          {busy ? "Enregistrement..." : "Enregistrer"}
                         </Button>
                         <Button
                           variant="outlined"
                           color="secondary"
                           onClick={() => setEditingUser(null)}
+                          disabled={busy}
                         >
                           Annuler
                         </Button>

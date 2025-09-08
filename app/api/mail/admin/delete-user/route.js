@@ -1,5 +1,3 @@
-// app/api/mail/admin/delete-user/route.js
-// /app/api/admin/delete-user/route.js
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
@@ -21,15 +19,13 @@ export async function POST(req) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    // 2) UID à supprimer (reçu du client)
     const { uid } = await req.json();
     if (!uid)
       return NextResponse.json({ error: "Missing uid" }, { status: 400 });
 
-    // 3) Auth
     await admin.auth().deleteUser(uid);
 
-    // 4) Realtime DB (multi-path)
+    //  Realtime DB (multi-path)
     await admin
       .database()
       .ref()
@@ -39,15 +35,13 @@ export async function POST(req) {
         [`users/pro/${uid}`]: null,
       });
 
-    // 5) Storage (optionnel)
+    //  Storage (optionnel)
     try {
       await admin
         .storage()
         .bucket()
         .deleteFiles({ prefix: `images/${uid}/` });
-    } catch {
-      // ok si rien à supprimer
-    }
+    } catch {}
 
     return NextResponse.json({ ok: true });
   } catch (e) {
