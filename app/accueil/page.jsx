@@ -196,7 +196,7 @@ export default function MultiActionAreaCard() {
         container
         spacing={4}
         justifyContent="center"
-        sx={{ width: "min(96vw, 1400px)", px: 3 }}
+        sx={{ width: "min(95vw, 1600px)", px: 3 }}
       >
         {users.length > 0 ? (
           users.map((user) => (
