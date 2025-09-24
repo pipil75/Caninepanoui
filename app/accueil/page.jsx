@@ -158,13 +158,16 @@ export default function MultiActionAreaCard() {
         minHeight: "100vh",
         display: "flex",
         flexDirection: "column",
-        alignItems: "center",
+
+        alignItems: "stretch",
       }}
     >
       <CssBaseline />
       <ResponsiveAppBar />
       <CookieAccepter />
-      <Box sx={{ maxWidth: "1400px", textAlign: "center", px: 2, mb: 5 }}>
+      <Box
+        sx={{ width: "min(96vw, 1400px)", textAlign: "center", px: 2, mb: 5 }}
+      >
         <Typography
           variant="h3"
           sx={{
@@ -193,7 +196,7 @@ export default function MultiActionAreaCard() {
         container
         spacing={4}
         justifyContent="center"
-        sx={{ maxWidth: "1400px", px: 3 }}
+        sx={{ width: "min(96vw, 1400px)", px: 3 }}
       >
         {users.length > 0 ? (
           users.map((user) => (
