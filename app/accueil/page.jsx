@@ -164,7 +164,7 @@ export default function MultiActionAreaCard() {
       <CssBaseline />
       <ResponsiveAppBar />
       <CookieAccepter />
-      <Box sx={{ maxWidth: "1000px", textAlign: "center", px: 2, mb: 5 }}>
+      <Box sx={{ maxWidth: "1400px", textAlign: "center", px: 2, mb: 5 }}>
         <Typography
           variant="h3"
           sx={{
@@ -193,7 +193,7 @@ export default function MultiActionAreaCard() {
         container
         spacing={4}
         justifyContent="center"
-        sx={{ maxWidth: "1200px", px: 3 }}
+        sx={{ maxWidth: "1400px", px: 3 }}
       >
         {users.length > 0 ? (
           users.map((user) => (
