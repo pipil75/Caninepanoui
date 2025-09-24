@@ -166,7 +166,7 @@ export default function MultiActionAreaCard() {
       <ResponsiveAppBar />
       <CookieAccepter />
       <Box
-        sx={{ width: "min(96vw, 1400px)", textAlign: "center", px: 2, mb: 5 }}
+        sx={{ width: "min(96vw, 1600px)", textAlign: "center", px: 2, mb: 5 }}
       >
         <Typography
           variant="h3"
